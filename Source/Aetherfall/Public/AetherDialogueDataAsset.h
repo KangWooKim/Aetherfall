@@ -5,6 +5,7 @@
 #include "Engine/DataAsset.h"
 #include "AetherDialogueDataAsset.generated.h"
 
+/** 트리거와 대사 묶음을 편집 가능한 데이터 에셋으로 제공한다. */
 UCLASS(BlueprintType)
 class AETHERFALL_API UAetherDialogueDataAsset : public UDataAsset
 {

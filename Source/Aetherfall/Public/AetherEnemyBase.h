@@ -14,6 +14,7 @@ class USkeletalMeshComponent;
 class USoundBase;
 class UStaticMeshComponent;
 
+/** 적 기본형과 보스 유형을 구분해 조정 데이터 및 행동 선택에 사용한다. */
 UENUM(BlueprintType)
 enum class EAetherEnemyArchetype : uint8
 {
@@ -24,6 +25,7 @@ enum class EAetherEnemyArchetype : uint8
 	Aurel
 };
 
+/** 적 공격의 사거리·예고·피해·회복 시간을 데이터로 정의한다. */
 USTRUCT(BlueprintType)
 struct FAetherEnemyAttackPatternData
 {
@@ -57,6 +59,7 @@ struct FAetherEnemyAttackPatternData
 	float SelectionWeight = 1.0f;
 };
 
+/** 적 유형별 이동·전투·공격 패턴의 기본 설정을 묶는다. */
 USTRUCT(BlueprintType)
 struct FAetherEnemyArchetypeData
 {
@@ -125,10 +128,12 @@ struct FAetherEnemyArchetypeData
 	UPROPERTY(EditDefaultsOnly, Category = "Archetype|Boss")
 	bool bResistAttackInterruptsDuringWindup = false;
 
+	/** 일반 적의 가중 선택과 보스의 순차 선택에 사용하는 공격 수치 목록이다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Archetype")
 	TArray<FAetherEnemyAttackPatternData> AttackPatterns;
 };
 
+/** 적 캐릭터의 추적, 공격 예고·판정·회복, 피격과 패리 경직, 보스 단계 및 시청각 실행을 조정한다. */
 UCLASS()
 class AETHERFALL_API AAetherEnemyBase : public ACharacter
 {
@@ -146,18 +151,21 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Aetherfall|Enemy")
 	FORCEINLINE bool IsHitReacting() const { return bIsHitReacting; }
 
+	/** 기존 공격·피격 타이머와 공격 슬롯을 해제하고 패리 경직 및 밀려남을 적용한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Enemy")
 	void ApplyParryStagger(AActor* StaggerCauser);
 
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Enemy")
 	void RefreshParryStagger(float StaggerDuration);
 
+	/** 공격 슬롯과 기존 행동을 정리하여 처형 연출 동안 적의 공격 및 추적을 억제한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Enemy")
 	void ApplyExecutionSuppression(AActor* SuppressionCauser, float SuppressionDuration);
 
 	UFUNCTION(BlueprintPure, Category = "Aetherfall|Enemy")
 	FORCEINLINE bool IsParryStaggered() const { return bIsParryStaggered; }
 
+	/** 원형 프로필을 찾아 전투 수치와 시각 크기를 적용하고 체력 및 보스 단계 상태를 초기화한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Enemy")
 	void ApplyEnemyArchetype(EAetherEnemyArchetype NewArchetype);
 
@@ -199,17 +207,23 @@ protected:
 
 private:
 	void RefreshPrototypeVisualMode();
+	/** 일반 적 세 종류와 두 보스의 기본 능력치·공격 목록을 구성한다. 실제 적용값은 원형 프로필에서 복사한다. */
 	void InitializeDefaultArchetypeProfiles();
 	const FAetherEnemyArchetypeData* FindArchetypeProfile(EAetherEnemyArchetype ArchetypeToFind) const;
 	void UpdateTarget();
+	/** 감지 범위 안의 플레이어 방향과 주변 적 분리 방향을 합쳐 이동 입력을 만든다. 경로 탐색 요청은 수행하지 않는다. */
 	void ChaseTarget(float DeltaTime);
+	/** 행동 상태와 공격 패턴, 재사용 시간, 동시 공격 슬롯을 확인한 뒤 공격 예고를 시작한다. */
 	void TryAttackTarget();
+	/** 선택한 패턴을 복사해 공격 도중 설정 변화를 분리하고, 연출과 예고 타이머를 시작한다. */
 	void BeginAttackWindup(const FAetherEnemyAttackPatternData& AttackPattern);
 	void UpdateAttackWindupFacing(float DeltaTime);
+	/** 예고 종료 시 평면 거리를 다시 검사해 플레이어 방어 판정에 피해를 전달하고, 패리 경직이 없으면 회복 단계로 이동한다. */
 	void ResolveAttack();
 	void EndAttackRecovery();
 	void ReleaseAttackSlot();
 	void DrawAttackTelegraph() const;
+	/** 보스 전환과 공격 예고 중 저항 조건을 확인하고, 중단 가능한 공격의 타이머 및 슬롯을 정리한 뒤 경직을 적용한다. */
 	void BeginHitReaction(AActor* DamageCauser);
 	void EndHitReaction();
 	void EndParryStagger();
@@ -221,8 +235,11 @@ private:
 	FAetherEnemyActionSoundSet BuildEnemyActionSoundSet() const;
 	void UpdatePrototypeLoopAnimation();
 	float PlayEnemyActionAnimation(UAnimationAsset* Animation, const FString& Reason);
+	/** 대체 연출 우선 설정을 존중하고 재생 실패 시 몽타주 또는 대체 애니메이션을 순서대로 시도한다. */
 	float PlayEnemyActionVisual(const FAetherEnemyActionVisualSelection& VisualSelection, const FString& Reason);
+	/** 대체 사망 연출 우선 설정을 확인한 뒤 처형용 사망 몽타주와 일반 사망 연출을 순서대로 시도한다. */
 	float PlayEnemyDeathVisual(const FAetherEnemyActionVisualSelection& VisualSelection, const FString& Reason);
+	/** 동일한 반복 애니메이션이면 재시작하지 않고 필요한 재생 속도만 갱신한다. */
 	void PlayEnemyLoopAnimation(UAnimationAsset* Animation, const FString& Reason, float PlayRate);
 	void ApplyPrototypeAnimationRootMotionPolicy() const;
 	void LogEnemyAnimationConfiguration() const;
@@ -230,12 +247,14 @@ private:
 	FVector GetHitReactionDirection(AActor* DamageCauser) const;
 	const FAetherEnemyAttackPatternData* SelectAttackPattern(float DistanceToTarget);
 	const FAetherEnemyAttackPatternData& GetActiveAttackPattern() const;
+	/** 월드의 살아 있는 다른 적을 순회해 가까울수록 강한 평면 분리 방향을 누적한다. */
 	FVector CalculateEnemySeparationDirection() const;
 	float GetMaxAttackRange() const;
 	bool IsTargetWithinAttackRange(const FAetherEnemyAttackPatternData& AttackPattern, float ExtraPadding = 0.0f) const;
 	bool IsTargetAttackable(float RangePadding = 0.0f) const;
 	void AnnounceAurelPhaseOneIntro();
 	bool TryStartAurelPhaseTwo(float CurrentHealth, float MaxHealth, AActor* DamageCauser);
+	/** 보스 정책이 허용한 전환에서 기존 공격을 취소하고 2단계 패턴·속도·재사용 시간·보상을 적용한다. */
 	void BeginAurelPhaseTwo(AActor* DamageCauser, const FAetherAurelBossPhaseTransitionPlan& TransitionPlan);
 	void EndAurelPhaseShift();
 	void AnnounceAurelLowHealth(float CurrentHealth, float MaxHealth);
@@ -247,6 +266,7 @@ private:
 	UFUNCTION()
 	void HandleHealthChanged(UAetherHealthComponent* ChangedHealthComponent, float CurrentHealth, float MaxHealth, AActor* DamageCauser);
 
+	/** 모든 전투 타이머와 공격 슬롯을 정리하고 충돌·이동을 끈 뒤 사망 연출 길이를 고려해 수명을 설정한다. */
 	UFUNCTION()
 	void HandleDeath(UAetherHealthComponent* DeadHealthComponent, AActor* DamageCauser);
 
@@ -307,9 +327,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Enemy|AI|Debug")
 	bool bShowEnemyScreenDebugMessages = false;
 
+	/** 일반 적의 가중 선택과 보스의 순차 선택에 사용하는 공격 수치 목록이다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy|AI|Attacks")
 	TArray<FAetherEnemyAttackPatternData> AttackPatterns;
 
+	/** 아우렐의 2단계에서 사용할 별도 공격 목록이다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy|Boss|Aurel")
 	TArray<FAetherEnemyAttackPatternData> AurelPhaseTwoAttackPatterns;
 

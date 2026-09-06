@@ -5,6 +5,7 @@
 #include "Engine/DataAsset.h"
 #include "AetherPrototypeEncounterDataAsset.generated.h"
 
+/** 구간 전투 설정과 시작 안내 문구·색상을 재사용 가능한 데이터 에셋으로 제공한다. */
 UCLASS(BlueprintType)
 class AETHERFALL_API UAetherPrototypeEncounterDataAsset : public UDataAsset
 {

@@ -1,3 +1,4 @@
+/** 플레이어의 전투 행동과 자원, 판정·애니메이션·피드백을 연결하는 컴포넌트다. 조건 계산은 정책 객체에 맡기고 월드와 Actor에 대한 실행은 이곳에서 수행한다. */
 #include "AetherCombatComponent.h"
 
 #include "AetherAudioSettingsLibrary.h"
@@ -41,6 +42,7 @@ UAetherCombatComponent::UAetherCombatComponent()
 	LightAttackDamageValues = { 20.0f, 22.0f, 24.0f, 30.0f };
 }
 
+/** 소유 캐릭터와 사망 이벤트를 연결하고 전투 자원의 초기값을 적용한다. */
 void UAetherCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -54,6 +56,7 @@ void UAetherCombatComponent::BeginPlay()
 	}
 }
 
+/** 연속 처리가 필요한 회피 이동과 스태미나 회복만 갱신한다. */
 void UAetherCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -84,6 +87,7 @@ bool UAetherCombatComponent::IsAetherSlashReady() const
 	return CurrentAetherGauge >= ResolveAetherSlashCost() && GetAetherSlashCooldownRemaining() <= 0.0f && !bIsAetherSlashing;
 }
 
+/** 회복한 체력에 맞춰 위험 알림의 재생 상태를 갱신한다. */
 void UAetherCombatComponent::NotifyOwnerHealed()
 {
 	const AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -136,6 +140,7 @@ void UAetherCombatComponent::ApplyCombatActionRuntimeFlags(const FAetherCombatAc
 	bIsHitReacting = RuntimeFlags.bHitReacting;
 }
 
+/** 새 행동 모드가 요구하는 플래그 묶음을 한 번에 적용한다. 타이머 해제와 자원 변경은 별도 계획으로 처리한다. */
 void UAetherCombatComponent::SetCombatActionMode(EAetherCombatActionMode Mode)
 {
 	ApplyCombatActionRuntimeFlags(FAetherCombatActionStatePolicy::BuildFlagsForMode(Mode));
@@ -146,6 +151,7 @@ EAetherCombatActionMode UAetherCombatComponent::GetCombatActionMode() const
 	return FAetherCombatActionStatePolicy::ResolveDominantMode(BuildCombatActionStateSnapshot());
 }
 
+/** 정책이 지정한 타이머만 TimerManager에서 해제해 전환 후 오래된 지연 콜백이 남지 않게 한다. */
 void UAetherCombatComponent::ApplyCombatActionTimerClearPlan(const FAetherCombatActionTimerClearPlan& TimerClearPlan)
 {
 	UWorld* World = GetWorld();
@@ -205,6 +211,7 @@ void UAetherCombatComponent::ApplyCombatActionTimerClearPlan(const FAetherCombat
 	}
 }
 
+/** 적용 가능한 계획에 지정된 자원과 소비 시각만 갱신한다. 정책의 계산과 실제 멤버 변경을 연결하는 지점이다. */
 void UAetherCombatComponent::ApplyCombatResourceMutationPlan(const FAetherCombatResourceMutationPlan& ResourceMutationPlan)
 {
 	if (!ResourceMutationPlan.bCanApply)
@@ -228,6 +235,7 @@ void UAetherCombatComponent::ApplyCombatResourceMutationPlan(const FAetherCombat
 	}
 }
 
+/** 행동 허용 판정을 통과하면 약공격을 시작한다. 공격 도중 입력은 다음 콤보 예약으로 기록한다. */
 void UAetherCombatComponent::StartLightAttack()
 {
 	const FAetherCombatActionGateResult GateResult = FAetherCombatActionGatePolicy::EvaluateLightAttack(BuildCombatActionStateSnapshot());
@@ -244,6 +252,7 @@ void UAetherCombatComponent::StartLightAttack()
 	BeginLightAttack();
 }
 
+/** 강공격의 상태 충돌을 검사한 뒤 비용과 판정 시간을 적용하는 실행 경로로 넘긴다. */
 void UAetherCombatComponent::StartHeavyAttack()
 {
 	const FAetherCombatActionGateResult GateResult = FAetherCombatActionGatePolicy::EvaluateHeavyAttack(BuildCombatActionStateSnapshot());
@@ -256,6 +265,7 @@ void UAetherCombatComponent::StartHeavyAttack()
 	BeginHeavyAttack();
 }
 
+/** 유효한 처형 대상을 확인하고 주변 적 억제, 연출, 타격·종료 타이머를 함께 시작한다. 공격 중 요청은 대상이 있을 때 예약한다. */
 void UAetherCombatComponent::StartExecution()
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -409,6 +419,7 @@ void UAetherCombatComponent::StartExecution()
 	World->GetTimerManager().SetTimer(ExecutionTimerHandle, this, &UAetherCombatComponent::EndExecution, ExecutionPlan.Duration, false);
 }
 
+/** 행동과 재사용 시간을 검사한 뒤 게이지를 소비한다. 참격 상태와 바라보는 방향을 설정하고 판정 실행을 준비한다. */
 void UAetherCombatComponent::StartAetherSlash()
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -472,6 +483,7 @@ void UAetherCombatComponent::StartAetherSlash()
 	World->GetTimerManager().SetTimer(AttackEndTimerHandle, this, &UAetherCombatComponent::EndCurrentAttack, AetherSlashPlan.Duration, false);
 }
 
+/** 비용과 재사용 조건을 통과하면 입력 방향을 저장하고 회피를 시작한다. 루트 모션, 시간 기반 변위, 발사 이동 중 설정된 경로를 사용한다. */
 void UAetherCombatComponent::StartDodge()
 {
 	UWorld* World = GetWorld();
@@ -533,6 +545,7 @@ void UAetherCombatComponent::StartDodge()
 	World->GetTimerManager().SetTimer(DodgeEndTimerHandle, this, &UAetherCombatComponent::EndDodge, DodgeDuration, false);
 }
 
+/** 방어 상태로 전환하고 이동 속도 보정을 적용한다. 방어 비용은 실제 피격 시 계산한다. */
 void UAetherCombatComponent::StartGuard()
 {
 	const FAetherCombatActionGateResult GateResult = FAetherCombatActionGatePolicy::EvaluateGuard(BuildCombatActionStateSnapshot(), CurrentStamina);
@@ -550,6 +563,7 @@ void UAetherCombatComponent::StartGuard()
 	PlayActionSound(GuardRaiseSound.Get());
 }
 
+/** 현재 방어 중일 때만 해제하고 방어 전 이동 속도를 복원한다. */
 void UAetherCombatComponent::StopGuard()
 {
 	if (!bIsGuarding)
@@ -564,6 +578,7 @@ void UAetherCombatComponent::StopGuard()
 	PlayActionSound(GuardLowerSound.Get());
 }
 
+/** 비용을 소비하고 패링 판정 시간을 연다. 시간이 끝나면 실패 후 회복 상태로 전환한다. */
 void UAetherCombatComponent::TryParry()
 {
 	UWorld* World = GetWorld();
@@ -605,6 +620,7 @@ void UAetherCombatComponent::SimulateIncomingHit()
 	ReceiveIncomingHit(PrototypeIncomingDamage, GetOwner());
 }
 
+/** 사망·회복 무적·처형 보호를 먼저 검사한다. 이후 패링 성공, 방어 및 방어 파괴, 일반 피해 순서로 처리한다. */
 void UAetherCombatComponent::ReceiveIncomingHit(float DamageAmount, AActor* DamageCauser)
 {
 	if (IsOwnerDead())
@@ -689,6 +705,7 @@ void UAetherCombatComponent::ReceiveIncomingHit(float DamageAmount, AActor* Dama
 	ApplyIncomingDamage(DamageAmount, DamageCauser);
 }
 
+/** 전투 지연 작업과 상태를 정리하고 체력·자원·재사용 시간·알림 상태를 재도전용 값으로 초기화한다. */
 void UAetherCombatComponent::ResetPlayerPrototypeState()
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -714,6 +731,7 @@ void UAetherCombatComponent::GrantPrototypeAetherGauge(float Amount, const FStri
 	AddAetherGauge(Amount, Reason);
 }
 
+/** 알림 기반 판정이 켜지고 현재 약공격일 때만 해당 콤보의 근접 판정을 실행한다. */
 void UAetherCombatComponent::HandleLightAttackHitNotify()
 {
 	if (!bUseAnimationNotifiesForAttackTraces)
@@ -730,6 +748,7 @@ void UAetherCombatComponent::HandleLightAttackHitNotify()
 	PerformPrototypeTrace(CurrentComboStep);
 }
 
+/** 강공격 상태의 애니메이션 알림을 근접 판정으로 연결하고 남은 판정 타이머를 해제한다. */
 void UAetherCombatComponent::HandleHeavyAttackHitNotify()
 {
 	if (!bUseAnimationNotifiesForAttackTraces)
@@ -750,6 +769,7 @@ void UAetherCombatComponent::HandleHeavyAttackHitNotify()
 	PerformHeavyAttackTrace();
 }
 
+/** 참격 상태의 발사 알림을 투사체 생성 경로로 연결하고 남은 발사 타이머를 해제한다. */
 void UAetherCombatComponent::HandleAetherSlashFireNotify()
 {
 	if (!bUseAnimationNotifiesForAttackTraces)
@@ -770,6 +790,7 @@ void UAetherCombatComponent::HandleAetherSlashFireNotify()
 	PerformAetherSlashTrace();
 }
 
+/** 처형이 아직 해결되지 않았을 때 대체 판정 타이머를 취소하고 공통 타격 해결 경로를 호출한다. */
 void UAetherCombatComponent::HandleExecutionImpactNotify()
 {
 	if (!bIsExecuting || bExecutionImpactResolved)
@@ -787,6 +808,7 @@ void UAetherCombatComponent::HandleExecutionImpactNotify()
 	ResolveExecutionImpact();
 }
 
+/** 다음 콤보의 비용을 확인해 소비하고, 설정에 따라 즉시 판정하거나 애니메이션 알림을 기다린다. */
 void UAetherCombatComponent::BeginLightAttack()
 {
 	UWorld* World = GetWorld();
@@ -835,6 +857,7 @@ void UAetherCombatComponent::BeginLightAttack()
 	World->GetTimerManager().SetTimer(AttackEndTimerHandle, this, &UAetherCombatComponent::EndCurrentAttack, LightAttackPlan.Duration, false);
 }
 
+/** 반격 가능 여부를 보관한 뒤 비용을 소비한다. 실행 계획에 맞춰 강공격 연출과 타격·종료 시점을 연결한다. */
 void UAetherCombatComponent::BeginHeavyAttack()
 {
 	UWorld* World = GetWorld();
@@ -883,6 +906,7 @@ void UAetherCombatComponent::BeginHeavyAttack()
 	World->GetTimerManager().SetTimer(AttackEndTimerHandle, this, &UAetherCombatComponent::EndCurrentAttack, HeavyAttackPlan.Duration, false);
 }
 
+/** 아직 해결되지 않은 유효한 처형 대상이 있으면 종료 시 마지막 대체 판정을 시도한 뒤 처형 상태를 정리한다. */
 void UAetherCombatComponent::EndExecution()
 {
 	if (!bExecutionImpactResolved && PendingExecutionTarget.IsValid())
@@ -897,6 +921,7 @@ void UAetherCombatComponent::EndExecution()
 	ShowCombatDebugMessage(TEXT("Execution ended"), FColor::Silver);
 }
 
+/** 공격 상태와 지연 타격을 정리한다. 예약된 처형을 먼저 처리하고, 그다음 약공격 연속 입력 또는 콤보 초기화 지연을 처리한다. */
 void UAetherCombatComponent::EndCurrentAttack()
 {
 	const bool bWasHeavyAttacking = bIsHeavyAttacking;
@@ -986,6 +1011,7 @@ void UAetherCombatComponent::OpenParryCounterWindow()
 	ShowCombatDebugMessage(TEXT("Parry counter window"), FColor::Purple);
 }
 
+/** 피해 원인을 우선 타격 대상으로 보관하고 별도 반격 비용 소비 없이 강공격 상태의 자동 반격을 예약한다. */
 void UAetherCombatComponent::BeginAutomaticParryCounter(AActor* CounterTarget)
 {
 	UWorld* World = GetWorld();
@@ -1030,6 +1056,7 @@ void UAetherCombatComponent::BeginAutomaticParryCounter(AActor* CounterTarget)
 	World->GetTimerManager().SetTimer(AttackEndTimerHandle, this, &UAetherCombatComponent::EndCurrentAttack, AutoCounterPlan.Duration, false);
 }
 
+/** 피격 회복 무적을 켜고 종료 타이머를 갱신한다. 회피 시작과는 별도의 보호 상태다. */
 void UAetherCombatComponent::BeginDamageInvulnerability()
 {
 	UWorld* World = GetWorld();
@@ -1044,6 +1071,7 @@ void UAetherCombatComponent::BeginDamageInvulnerability()
 	ShowCombatDebugMessage(FString::Printf(TEXT("Hit recovery / I-frames %.2f"), DamageInvulnerabilityDuration), FColor::Orange);
 }
 
+/** 회복 무적을 해제하고 요청된 경우 GameMode를 통해 적의 다음 공격을 추가 지연한다. */
 void UAetherCombatComponent::EndDamageInvulnerability()
 {
 	bIsDamageInvulnerable = false;
@@ -1062,6 +1090,7 @@ void UAetherCombatComponent::EndDamageInvulnerability()
 	}
 }
 
+/** 진행 중 행동과 예약 판정을 중단하고 넉백을 적용한다. 기존 회복 무적 종료 타이머는 유지한다. */
 void UAetherCombatComponent::BeginHitReaction(AActor* DamageCauser)
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -1121,6 +1150,7 @@ FVector UAetherCombatComponent::GetHitReactionDirection(AActor* DamageCauser) co
 	return -Character->GetActorForwardVector().GetSafeNormal2D();
 }
 
+/** 완화 곡선의 이번 프레임 증가량만큼 이동한다. 스윕이 장애물에 막히면 남은 코드 기반 회피 변위를 소진 처리한다. */
 void UAetherCombatComponent::UpdateDodgeMovement(float DeltaTime)
 {
 	if (!bIsDodging || bUseRootMotionForDodge || !bUseTimedDodgeMovement || DodgeDuration <= KINDA_SMALL_NUMBER || DodgeTravelDistance <= 0.0f || ActiveDodgeDirection.IsNearlyZero())
@@ -1162,6 +1192,7 @@ void UAetherCombatComponent::ClearDodgeMovementState()
 	DodgeMovementAlpha = 0.0f;
 }
 
+/** 방어 전 최대 이동 속도를 한 번 보관한 뒤 보정 배율을 적용해 반복 호출 시 속도가 중복 감소하지 않게 한다. */
 void UAetherCombatComponent::ApplyGuardMovementModifier()
 {
 	if (!bSlowMovementWhileGuarding)
@@ -1190,6 +1221,7 @@ void UAetherCombatComponent::ApplyGuardMovementModifier()
 	MovementComponent->MaxWalkSpeed = CachedPreGuardMaxWalkSpeed * GuardMovementSpeedMultiplier;
 }
 
+/** 보관된 방어 전 이동 속도를 복원하고 캐시 사용 상태를 해제한다. */
 void UAetherCombatComponent::RestoreGuardMovementModifier()
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -1209,6 +1241,7 @@ void UAetherCombatComponent::ResetCombo()
 	bQueuedLightAttack = false;
 }
 
+/** 행동 정책이 회복을 허용할 때 프레임 시간에 따른 회복 계획을 적용한다. */
 void UAetherCombatComponent::RegenerateStamina(float DeltaTime)
 {
 	const UWorld* World = GetWorld();
@@ -1249,6 +1282,7 @@ void UAetherCombatComponent::AddAetherGauge(float Amount, const FString& Reason)
 	UpdateAetherResourceAudioCues(OldAetherGauge);
 }
 
+/** 양수 비용은 잔량을 확인한 뒤 차감하고 자원 알림 상태를 갱신한다. 부족하면 상태를 바꾸지 않고 실패를 반환한다. */
 bool UAetherCombatComponent::SpendAetherGauge(float Amount, const FString& Reason)
 {
 	const FAetherCombatResourceMutationPlan ResourceMutationPlan =
@@ -1271,6 +1305,7 @@ bool UAetherCombatComponent::SpendAetherGauge(float Amount, const FString& Reaso
 	return true;
 }
 
+/** 소유 캐릭터를 제외하는 구 스윕으로 약공격 후보를 수집하고 실제 피해 대상 선택 단계로 넘긴다. */
 void UAetherCombatComponent::PerformPrototypeTrace(int32 ComboStep)
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -1308,12 +1343,14 @@ void UAetherCombatComponent::PerformPrototypeTrace(int32 ComboStep)
 	}
 }
 
+/** 이전 판정 결과만 비우고 예상 후보 수를 위한 용량을 확보한다. */
 void UAetherCombatComponent::PrepareReusableTraceHitResults(int32 ExpectedHitCount)
 {
 	ReusableTraceHitResults.Reset();
 	ReusableTraceHitResults.Reserve(FMath::Max(1, ExpectedHitCount));
 }
 
+/** 강공격이 여전히 활성 상태일 때 구 스윕을 수행하고 경직 보너스를 포함하는 피해 경로로 넘긴다. */
 void UAetherCombatComponent::PerformHeavyAttackTrace()
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -1355,6 +1392,7 @@ void UAetherCombatComponent::PerformHeavyAttackTrace()
 	}
 }
 
+/** 월드의 투사체 풀에서 검기를 획득하고, 풀을 사용할 수 없으면 직접 생성하여 발사 설정을 전달한다. */
 void UAetherCombatComponent::PerformAetherSlashTrace()
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -1395,6 +1433,7 @@ void UAetherCombatComponent::PerformAetherSlashTrace()
 	SlashProjectile->SetImpactAssets(AetherSlashImpactEffect.Get(), AetherSlashHitSound.Get(), ImpactEffectScale, ImpactSoundVolume);
 }
 
+/** 피격 목록에서 우선 대상을 선택하고, 패리 경직 보너스와 명중 보상을 실제 피해 적용 결과에 따라 처리한다. */
 void UAetherCombatComponent::ApplyHeavyAttackDamage(const TArray<FHitResult>& HitResults)
 {
 	AActor* DamageCauser = GetOwner();
@@ -1495,6 +1534,7 @@ void UAetherCombatComponent::RefreshExecutionOpportunityAfterHeavyCounter(AActor
 	ShowCombatDebugMessage(TEXT("Execution opportunity refreshed"), FColor::Purple);
 }
 
+/** 처형 가능한 락온 대상을 우선하고, 없으면 평면 거리상 가장 가까운 적을 찾는다. */
 AAetherEnemyBase* UAetherCombatComponent::FindExecutionTarget() const
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -1536,6 +1576,7 @@ AAetherEnemyBase* UAetherCombatComponent::FindExecutionTarget() const
 	return BestEnemy;
 }
 
+/** 피해 이벤트 전에 처리 완료를 기록하고 보류 대상을 비워, 알림·타이머·종료 경로의 중복 피해를 방지한다. */
 void UAetherCombatComponent::ResolveExecutionImpact()
 {
 	if (bExecutionImpactResolved)
@@ -1543,6 +1584,7 @@ void UAetherCombatComponent::ResolveExecutionImpact()
 		return;
 	}
 
+	// 피해 콜백이 처형 종료 경로를 다시 호출해도 같은 타격이 반복되지 않도록 먼저 확정한다.
 	bExecutionImpactResolved = true;
 	if (UWorld* World = GetWorld())
 	{
@@ -1550,6 +1592,7 @@ void UAetherCombatComponent::ResolveExecutionImpact()
 	}
 
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
+	// 현재 대상은 지역 변수에 보관하고 보류 참조는 피해 이벤트 전에 비운다.
 	AAetherEnemyBase* ExecutionTarget = PendingExecutionTarget.Get();
 	PendingExecutionTarget.Reset();
 
@@ -1588,6 +1631,7 @@ void UAetherCombatComponent::HandleExecutionImpactFallback()
 	ResolveExecutionImpact();
 }
 
+/** 처형 대체 타이머와 보류 대상을 해제하고, 아직 타격하지 않은 적의 예정 사망 연출을 취소한다. */
 void UAetherCombatComponent::ClearPendingExecutionImpact()
 {
 	if (UWorld* World = GetWorld())
@@ -1629,6 +1673,7 @@ const FAetherExecutionVariant* UAetherCombatComponent::SelectExecutionVariant()
 	return nullptr;
 }
 
+/** 처형 대상과 죽은 적을 제외한 주변 적의 공격을 지정 시간 동안 억제한다. */
 int32 UAetherCombatComponent::SuppressNearbyEnemiesForExecution(AAetherEnemyBase* ExecutionTarget, float SuppressionDuration) const
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -1859,6 +1904,7 @@ UAnimMontage* UAetherCombatComponent::ResolveAetherSlashMontage() const
 	return AetherSlashMontage.Get();
 }
 
+/** 패리 경직, 생존, 체력 비율, 평면 거리를 모두 만족하는 적만 처형 대상으로 인정한다. */
 bool UAetherCombatComponent::IsEnemyExecutionReady(const AAetherEnemyBase* Enemy) const
 {
 	const AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -1883,6 +1929,7 @@ bool UAetherCombatComponent::IsEnemyExecutionReady(const AAetherEnemyBase* Enemy
 	return FVector::DistSquared2D(Character->GetActorLocation(), Enemy->GetActorLocation()) <= FMath::Square(ExecutionRange);
 }
 
+/** 피해 적용 성공 후 피드백과 위험 알림을 갱신하고, 살아 있으면 피격 후 무적 및 선택적 경직을 시작한다. */
 bool UAetherCombatComponent::ApplyIncomingDamage(float DamageAmount, AActor* DamageCauser, bool bTriggerHitReaction)
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -1922,6 +1969,7 @@ bool UAetherCombatComponent::ApplyIncomingDamage(float DamageAmount, AActor* Dam
 	return false;
 }
 
+/** 사망·재시작 시 타이머와 예약 입력, 처형 대상, 이동 보정, 무적 상태를 함께 정리한다. */
 void UAetherCombatComponent::ClearCombatRuntimeState()
 {
 	ApplyCombatActionTimerClearPlan(FAetherCombatActionTimerPolicy::BuildClearPlan(EAetherCombatActionTimerClearReason::RuntimeReset));
@@ -1944,6 +1992,7 @@ bool UAetherCombatComponent::IsOwnerDead() const
 	return Character && Character->GetHealthComponent() && Character->GetHealthComponent()->IsDead();
 }
 
+/** 전투 상태와 이동을 정리한 뒤 게임 모드에 패배 후 재시작 예약을 요청한다. */
 void UAetherCombatComponent::HandleOwnerDeath(UAetherHealthComponent* DeadHealthComponent, AActor* DamageCauser)
 {
 	ClearCombatRuntimeState();
@@ -1956,6 +2005,7 @@ void UAetherCombatComponent::HandleOwnerDeath(UAetherHealthComponent* DeadHealth
 	}
 }
 
+/** 락온된 피격 대상을 우선하여 한 명만 공격하고, 우선 대상이 없으면 선택된 나머지 대상에 피해를 적용한다. */
 void UAetherCombatComponent::ApplyPrototypeDamage(const TArray<FHitResult>& HitResults, int32 ComboStep)
 {
 	const float DamageAmount = FAetherCombatActionTuningPolicy::SelectLightAttackDamage(ComboStep, ResolveLightAttackDamageValues());
@@ -1987,6 +2037,7 @@ AActor* UAetherCombatComponent::GetLockedCombatTarget() const
 	return Character->GetLockOnComponent()->GetLockedTarget();
 }
 
+/** 체력 컴포넌트가 피해를 수락한 경우에만 명중 게이지와 타격 연출을 지급한다. */
 bool UAetherCombatComponent::ApplyPrototypeDamageToActor(AActor* TargetActor, int32 ComboStep, float DamageAmount, AActor* DamageCauser, bool bLockedTargetDamage)
 {
 	FAetherCombatDamageRequest DamageRequest;
@@ -2014,6 +2065,7 @@ bool UAetherCombatComponent::ApplyPrototypeDamageToActor(AActor* TargetActor, in
 	return true;
 }
 
+/** 행동별 정지 설정을 존중하며 입력 방향과 현재 이동 속도를 정리한다. */
 void UAetherCombatComponent::StopOwnerMovementForCombatAction(bool bRespectActionSetting)
 {
 	if (bRespectActionSetting && !bStopMovementOnCombatAction)
@@ -2038,6 +2090,7 @@ void UAetherCombatComponent::StopOwnerMovementForCombatAction(bool bRespectActio
 	MovementComponent->StopMovementImmediately();
 }
 
+/** 전투 종료 상태에 맞춰 이동 모드를 바꾸고, 이동 잠금 시 락온도 해제한다. */
 void UAetherCombatComponent::SetOwnerMovementEnabled(bool bEnabled)
 {
 	AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -2093,6 +2146,7 @@ void UAetherCombatComponent::PlayImpactCameraFeedback(float Strength, const FStr
 	ShowCombatDebugMessage(FString::Printf(TEXT("Camera impact kick (%s)"), *Reason), FColor::Silver);
 }
 
+/** 타격 종류에 맞는 카메라·시청각 효과를 재생하고 플레이어와 대상에 개별 히트 스톱을 적용한다. */
 void UAetherCombatComponent::PlayImpactFeedback(EAetherCombatFeedbackType FeedbackType, float CameraStrength, float HitStopDuration, const FString& Reason, AActor* ImpactTarget) const
 {
 	PlayImpactCameraFeedback(CameraStrength, Reason);
@@ -2112,6 +2166,7 @@ void UAetherCombatComponent::PlayImpactFeedback(EAetherCombatFeedbackType Feedba
 	ShowCombatDebugMessage(FString::Printf(TEXT("Hit stop (%s) / %.2f"), *Reason, HitStopDuration), FColor::Silver);
 }
 
+/** 메시, 스켈레톤 호환성, 애니메이션 인스턴스를 확인한 후 몽타주를 재생한다. */
 void UAetherCombatComponent::PlayActionMontage(UAnimMontage* Montage, const FString& Reason) const
 {
 	const AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -2303,6 +2358,7 @@ float UAetherCombatComponent::GetRandomizedAudioPitch(float MinPitch, float MaxP
 	return FAetherCombatAudioCuePolicy::GetRandomizedPitch(MinPitch, MaxPitch);
 }
 
+/** 설정 에셋의 비어 있지 않은 몽타주 목록을 우선하며, 콤보 범위를 벗어나면 마지막 항목을 사용한다. */
 UAnimMontage* UAetherCombatComponent::GetLightAttackMontage(int32 ComboStep) const
 {
 	const TArray<TObjectPtr<UAnimMontage>>* MontageSource = &LightAttackMontages;
@@ -2324,6 +2380,7 @@ UAnimMontage* UAetherCombatComponent::GetLightAttackMontage(int32 ComboStep) con
 	return MontageSource->Num() > 0 ? MontageSource->Last() : nullptr;
 }
 
+/** 월드 회피 방향을 캐릭터 전후좌우 축과 비교하여 방향별 몽타주를 선택한다. */
 UAnimMontage* UAetherCombatComponent::GetDodgeMontageForDirection(const FVector& WorldDirection) const
 {
 	const AAetherfallCharacter* Character = OwnerCharacter.Get();
@@ -2381,6 +2438,7 @@ FAetherCombatFeedbackAssets UAetherCombatComponent::BuildCombatFeedbackAssets() 
 	return FeedbackAssets;
 }
 
+/** 타격 종류에 대응하는 효과와 효과음만 선택해 대상의 충격 위치에서 재생한다. */
 void UAetherCombatComponent::PlayFeedbackAssets(EAetherCombatFeedbackType FeedbackType, AActor* ImpactTarget) const
 {
 	UWorld* World = GetWorld();
@@ -2437,6 +2495,7 @@ FVector UAetherCombatComponent::GetFeedbackImpactLocation(AActor* ImpactTarget) 
 	return ImpactLocation;
 }
 
+/** 약한 참조로 액터의 생존을 확인한 뒤 타이머에서 시간 배율을 복원한다. */
 void UAetherCombatComponent::ApplyHitStopToActor(AActor* Actor, float Duration) const
 {
 	UWorld* World = GetWorld();

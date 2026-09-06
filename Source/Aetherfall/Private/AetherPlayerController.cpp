@@ -1,3 +1,4 @@
+/** Enhanced Input을 구성하고 플레이어 입력을 이동·전투·상호작용·대화·메뉴 컴포넌트에 전달한다. */
 #include "AetherPlayerController.h"
 
 #include "AetherCinematicDirectorSubsystem.h"
@@ -124,6 +125,7 @@ void AAetherPlayerController::BeginPlay()
 	}
 }
 
+/** Enhanced Input 컴포넌트가 있을 때 입력 시작·완료 사건을 행동별 처리 함수에 연결한다. */
 void AAetherPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -159,6 +161,7 @@ void AAetherPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(LockOnNextTargetAction, ETriggerEvent::Started, this, &AAetherPlayerController::SwitchLockOnTargetRight);
 }
 
+/** 기본 키보드·마우스·게임패드 매핑과 축 보정자를 생성한다. 디버그 초기화 입력도 이 경로에 포함된다. */
 void AAetherPlayerController::BuildDefaultInputMapping()
 {
 	if (!DefaultMappingContext || !MoveAction || !LookAction || !LightAttackAction || !HeavyAttackAction || !ExecutionAction || !AetherSlashAction || !UseQuickItemAction || !InteractAction || !DodgeAction || !GuardAction || !ParryAction || !DebugIncomingHitAction || !DebugResetPlayerAction || !DebugResetRoundAction || !DebugClearCheckpointProgressAction || !DialogueAdvanceAction || !PauseMenuAction || !LockOnAction || !LockOnPreviousTargetAction || !LockOnNextTargetAction)
@@ -217,6 +220,7 @@ void AAetherPlayerController::BuildDefaultInputMapping()
 	DefaultMappingContext->MapKey(LockOnNextTargetAction, EKeys::Gamepad_DPad_Right);
 }
 
+/** 입력 잠금을 확인하고 카메라 수평 시선 기준의 이동 방향을 계산해 폰과 회피용 방향 상태에 전달한다. */
 void AAetherPlayerController::Move(const FInputActionValue& Value)
 {
 	APawn* ControlledPawn = GetPawn();
@@ -262,6 +266,7 @@ void AAetherPlayerController::StopMove()
 	}
 }
 
+/** 연출 입력 차단을 확인한 뒤 사용자 카메라 감도와 수직 반전 설정을 적용한다. */
 void AAetherPlayerController::Look(const FInputActionValue& Value)
 {
 	if (IsCinematicBlockingGameplayInput())
@@ -482,6 +487,7 @@ void AAetherPlayerController::DebugClearPrototypeCheckpointProgress()
 	}
 }
 
+/** 건너뛸 수 있는 활성 연출을 먼저 처리하고, 그렇지 않으면 대화 진행을 요청한다. */
 void AAetherPlayerController::AdvanceDialogue()
 {
 	if (TrySkipActiveCinematic())
@@ -495,6 +501,7 @@ void AAetherPlayerController::AdvanceDialogue()
 	}
 }
 
+/** 활성 연출의 건너뛰기와 입력 차단을 우선 처리한 뒤 일시 정지 메뉴를 전환한다. */
 void AAetherPlayerController::TogglePauseMenu()
 {
 	if (TrySkipActiveCinematic() || IsCinematicBlockingGameplayInput())
@@ -563,6 +570,7 @@ bool AAetherPlayerController::IsControlledCharacterDead() const
 	return HealthComponent && HealthComponent->IsDead();
 }
 
+/** 사망·대화·연출 잠금과 전투 컴포넌트의 이동 차단을 합쳐 이동 입력 허용 여부를 판단한다. */
 bool AAetherPlayerController::IsControlledCharacterMovementLocked() const
 {
 	const AAetherfallCharacter* AetherCharacter = Cast<AAetherfallCharacter>(GetPawn());
@@ -599,6 +607,7 @@ bool AAetherPlayerController::IsCinematicBlockingGameplayInput() const
 	return CinematicDirector && CinematicDirector->ShouldBlockGameplayInput();
 }
 
+/** 대화 및 연출이 요청한 게임 행동 차단만 확인한다. 생존과 행동별 자원 조건은 해당 처리 계층에서 검사한다. */
 bool AAetherPlayerController::IsGameplayActionBlocked() const
 {
 	return IsPrototypeDialogueBlockingGameplayInput() || IsCinematicBlockingGameplayInput();

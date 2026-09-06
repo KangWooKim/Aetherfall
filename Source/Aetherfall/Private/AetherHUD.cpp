@@ -1,3 +1,4 @@
+/** 캐릭터와 진행 상태를 캔버스 기반 HUD로 그리며, 표시 문구와 길 안내는 별도 표시 정책을 활용한다. */
 #include "AetherHUD.h"
 
 #include "AetherCinematicDirectorSubsystem.h"
@@ -18,6 +19,7 @@
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 
+/** 캔버스와 플레이어가 준비되고 연출의 HUD 숨김 요청이 없을 때 각 상태 영역을 그린다. */
 void AAetherHUD::DrawHUD()
 {
 	Super::DrawHUD();
@@ -129,6 +131,7 @@ void AAetherHUD::DrawPlayerDangerStatus(const AAetherfallCharacter* PlayerCharac
 	DrawText(DangerViewData.Label, DangerViewData.Color, X + 14.0f, Y + 4.0f, GEngine ? GEngine->GetSmallFont() : nullptr, 1.0f);
 }
 
+/** 락온 대상을 우선하며, 락온이 없으면 가장 가까운 생존 적의 체력과 처형 가능 상태를 표시한다. */
 void AAetherHUD::DrawEnemyStatus(const AAetherfallCharacter* PlayerCharacter)
 {
 	const UAetherLockOnComponent* LockOnComponent = PlayerCharacter ? PlayerCharacter->GetLockOnComponent() : nullptr;
@@ -207,6 +210,7 @@ void AAetherHUD::DrawBossEnemyStatus(const AAetherEnemyBase* Enemy, bool bHasLoc
 	}
 }
 
+/** 공격을 예고 중인 가장 가까운 적의 패턴과 방어 힌트를 표시한다. */
 void AAetherHUD::DrawIncomingThreatStatus(const AAetherfallCharacter* PlayerCharacter)
 {
 	const AAetherEnemyBase* ThreatEnemy = FindIncomingThreatEnemy(PlayerCharacter);
@@ -463,6 +467,7 @@ void AAetherHUD::DrawPrototypeProgressFeedback()
 	DrawText(FeedbackLabel, FeedbackColor, X + 12.0f, Y + 4.0f, GEngine ? GEngine->GetSmallFont() : nullptr, 0.82f);
 }
 
+/** 자막 활성화와 크기 설정을 적용해 현재 대사와 목표 힌트를 그린다. */
 void AAetherHUD::DrawPrototypeDialogue()
 {
 	const AAetherGameModeBase* AetherGameMode = Cast<AAetherGameModeBase>(UGameplayStatics::GetGameMode(this));
@@ -503,6 +508,7 @@ void AAetherHUD::DrawPrototypeDialogue()
 	}
 }
 
+/** 길 안내 정책이 반환한 목표와 조작 힌트를 캔버스 영역에 표시한다. */
 void AAetherHUD::DrawPrototypeRouteGuidance(const AAetherfallCharacter* PlayerCharacter)
 {
 	const AAetherGameModeBase* AetherGameMode = Cast<AAetherGameModeBase>(UGameplayStatics::GetGameMode(this));
@@ -708,6 +714,7 @@ AAetherEnemyBase* AAetherHUD::FindNearestLivingEnemy(const AAetherfallCharacter*
 	return NearestEnemy;
 }
 
+/** 생존하며 공격 예고 중인 적을 월드에서 검색해 가장 가까운 위협을 반환한다. */
 AAetherEnemyBase* AAetherHUD::FindIncomingThreatEnemy(const AAetherfallCharacter* PlayerCharacter) const
 {
 	if (!PlayerCharacter)

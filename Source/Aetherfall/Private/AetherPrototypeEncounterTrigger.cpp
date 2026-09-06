@@ -1,3 +1,4 @@
+/** 플레이어의 영역 진입을 구간 전투 시작으로 연결하고 저장된 구간 이력에 따라 재작동 여부를 복원한다. */
 #include "AetherPrototypeEncounterTrigger.h"
 
 #include "AetherGameModeBase.h"
@@ -49,12 +50,14 @@ void AAetherPrototypeEncounterTrigger::ResetEncounterTrigger()
 	ShowEncounterMessage(FString::Printf(TEXT("Encounter trigger reset (%s)"), *EncounterLabel.ToString()), FColor::Cyan);
 }
 
+/** 저장된 작동 이력과 재작동 설정에 맞춰 트리거 충돌을 복원한다. */
 void AAetherPrototypeEncounterTrigger::RestorePrototypeCheckpointState(bool bShouldBeTriggered)
 {
 	bHasTriggered = bShouldBeTriggered;
 	SetTriggerActive(!(bDisableAfterTrigger && bHasTriggered));
 }
 
+/** 일회성 작동 조건을 확인한 뒤 선택적 구간 설정을 적용하고 게임 모드에 해당 구간 시작을 요청한다. */
 void AAetherPrototypeEncounterTrigger::HandleTriggerBeginOverlap(
 	UPrimitiveComponent* OverlappedComponent,
 	AActor* OtherActor,
@@ -113,6 +116,7 @@ void AAetherPrototypeEncounterTrigger::SetTriggerActive(bool bNewActive)
 	TriggerVolume->SetHiddenInGame(true);
 }
 
+/** 데이터 에셋이 있으면 그 설정을 우선하고, 없으면 액터에 편집된 구간 설정을 사용한다. */
 const FAetherPrototypeEncounterConfig& AAetherPrototypeEncounterTrigger::ResolveEncounterConfig() const
 {
 	return EncounterDataAsset ? EncounterDataAsset->GetEncounterConfig() : EncounterConfig;

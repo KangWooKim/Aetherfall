@@ -1,3 +1,4 @@
+/** 전투 피해와 사망 이벤트를 확인할 수 있도록 체력 컴포넌트와 단순 충돌·표시를 제공하는 실험용 표적이다. */
 #include "AetherPrototypeDamageTarget.h"
 
 #include "AetherHealthComponent.h"
@@ -52,6 +53,7 @@ void AAetherPrototypeDamageTarget::HandleHealthChanged(UAetherHealthComponent* C
 	ShowTargetDebugMessage(FString::Printf(TEXT("Target HP: %.0f / %.0f"), CurrentHealth, MaxHealth), FColor::Green);
 }
 
+/** 표적의 충돌을 끄고 짧은 지연 후 제거하여 사망 판정과 잔상 상태를 확인할 수 있게 한다. */
 void AAetherPrototypeDamageTarget::HandleDeath(UAetherHealthComponent* DeadHealthComponent, AActor* DamageCauser)
 {
 	ShowTargetDebugMessage(TEXT("Prototype target defeated"), FColor::Red);

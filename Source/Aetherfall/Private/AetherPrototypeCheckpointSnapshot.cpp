@@ -1,8 +1,10 @@
+/** 실행 중 진행 집합과 SaveGame 배열을 상호 변환하고 호환 상태 보정 및 재현 가능한 QA 요약을 제공한다. */
 #include "AetherPrototypeCheckpointSnapshot.h"
 
 #include "AetherPrototypeSaveGame.h"
 #include "AetherPrototypeSaveSchemaPolicy.h"
 
+/** 명시된 양수 진행 등급을 우선하고, 없으면 라벨 마지막 숫자 또는 한 글자 알파벳으로 등급을 추론한다. */
 int32 FAetherPrototypeCheckpointSnapshot::ResolveProgressRank(FName CheckpointLabel, int32 ExplicitCheckpointProgressRank)
 {
 	if (ExplicitCheckpointProgressRank > 0)
@@ -35,6 +37,7 @@ int32 FAetherPrototypeCheckpointSnapshot::ResolveProgressRank(FName CheckpointLa
 	return FMath::Max(0, ExplicitCheckpointProgressRank);
 }
 
+/** 현재 스키마를 기록하고 실행 상태의 라벨 집합을 저장 가능한 배열로 복사한다. */
 void FAetherPrototypeCheckpointSnapshot::WriteSaveGame(UAetherPrototypeSaveGame& SaveGameObject, const FAetherPrototypeCheckpointSnapshotState& SnapshotState)
 {
 	FAetherPrototypeSaveSchemaPolicy::StampCurrentSchema(SaveGameObject);
@@ -63,6 +66,7 @@ void FAetherPrototypeCheckpointSnapshot::WriteSaveGame(UAetherPrototypeSaveGame&
 	SaveGameObject.PlayedPrototypeDialogueLabels = SnapshotState.PlayedPrototypeDialogueLabels.Array();
 }
 
+/** 호출자가 스키마 허용 여부를 확인한 저장을 실행 상태로 변환하며 마지막 완료 구간과 결말 상태의 호환값을 보완한다. */
 FAetherPrototypeCheckpointSnapshotState FAetherPrototypeCheckpointSnapshot::ReadSaveGame(
 	const UAetherPrototypeSaveGame& SaveGameObject,
 	FName CathedralEndingGoalLabel)
@@ -143,6 +147,7 @@ FString FAetherPrototypeCheckpointSnapshot::BuildQASummary(const FString& Contex
 		*EndingState);
 }
 
+/** 비어 있지 않은 라벨을 정렬해 집합 순서에 영향받지 않는 QA 로그 문자열을 만든다. */
 FString FAetherPrototypeCheckpointSnapshot::FormatNameSetForQA(const TSet<FName>& Labels)
 {
 	if (Labels.Num() <= 0)

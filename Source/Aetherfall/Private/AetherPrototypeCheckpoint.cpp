@@ -1,3 +1,4 @@
+/** 플레이어 진입을 체크포인트 활성화 요청으로 바꾸고 일회성 작동과 진행 초기화 후 재진입 조건을 관리한다. */
 #include "AetherPrototypeCheckpoint.h"
 
 #include "AetherGameModeBase.h"
@@ -46,6 +47,7 @@ void AAetherPrototypeCheckpoint::ResetCheckpoint()
 	ShowCheckpointMessage(FString::Printf(TEXT("Checkpoint reset (%s)"), *CheckpointLabel.ToString()), FColor::Cyan);
 }
 
+/** 진행 삭제 후 이미 영역 안에 있는 플레이어는 한 번 나갔다 들어와야 다시 활성화되도록 상태를 설정한다. */
 void AAetherPrototypeCheckpoint::ResetCheckpointAfterProgressClear()
 {
 	bHasActivated = false;
@@ -64,6 +66,7 @@ void AAetherPrototypeCheckpoint::ResetCheckpointAfterProgressClear()
 	ShowCheckpointMessage(FString::Printf(TEXT("Checkpoint reset (%s)"), *CheckpointLabel.ToString()), FColor::Cyan);
 }
 
+/** 플레이어와 재활성화 조건을 확인하고 게임 모드에 진행 등급 판정을 위임한 뒤 트리거와 연출 상태를 갱신한다. */
 void AAetherPrototypeCheckpoint::HandleTriggerBeginOverlap(
 	UPrimitiveComponent* OverlappedComponent,
 	AActor* OtherActor,

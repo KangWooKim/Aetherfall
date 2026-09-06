@@ -1,3 +1,4 @@
+/** 라벨로 보상 수집 여부를 기록하고 최초 상호작용에서 회복 아이템과 전투 자원을 지급한다. */
 #include "AetherPrototypeRewardPickup.h"
 
 #include "AetherCombatComponent.h"
@@ -21,6 +22,7 @@ AAetherPrototypeRewardPickup::AAetherPrototypeRewardPickup()
 	RewardMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
+/** 게임 모드의 수집 기록을 읽어 이미 획득한 보상을 숨긴다. */
 void AAetherPrototypeRewardPickup::BeginPlay()
 {
 	Super::BeginPlay();
@@ -34,6 +36,7 @@ FText AAetherPrototypeRewardPickup::GetInteractionPrompt_Implementation(AActor* 
 	return bCollected ? FText::GetEmpty() : PickupPrompt;
 }
 
+/** 미수집 보상만 기록하고 플레이어에게 자원을 지급한 뒤 수집 상태와 피드백을 반영한다. */
 void AAetherPrototypeRewardPickup::Interact_Implementation(AActor* Interactor)
 {
 	if (bCollected)
@@ -67,11 +70,13 @@ void AAetherPrototypeRewardPickup::Interact_Implementation(AActor* Interactor)
 	OnRewardCollected();
 }
 
+/** 저장된 수집 상태만 복원하며 아이템과 자원을 다시 지급하지 않는다. */
 void AAetherPrototypeRewardPickup::RestorePrototypeCheckpointState(bool bShouldBeCollected)
 {
 	ApplyCollectedState(bShouldBeCollected);
 }
 
+/** 수집된 보상의 표시와 충돌을 비활성화한다. */
 void AAetherPrototypeRewardPickup::ApplyCollectedState(bool bNewCollected)
 {
 	bCollected = bNewCollected;

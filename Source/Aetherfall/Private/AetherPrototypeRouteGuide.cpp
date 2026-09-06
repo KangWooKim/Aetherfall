@@ -1,3 +1,4 @@
+/** 게임 모드 진행 정보에서 HUD용 목표·조작 안내·중요 구간 표시를 만드는 경로 안내 정책이다. */
 #include "AetherPrototypeRouteGuide.h"
 
 #include "AetherCombatComponent.h"
@@ -17,6 +18,7 @@ FAetherPrototypeRouteGuidanceViewData FAetherPrototypeRouteGuide::BuildGuidance(
 	return Guidance;
 }
 
+/** 종료·보스전·활성 전투 등 우선순위에 따라 현재 목표 문구를 선택한다. */
 FString FAetherPrototypeRouteGuide::BuildObjectiveLabel(const AAetherGameModeBase* AetherGameMode)
 {
 	if (!AetherGameMode)
@@ -103,6 +105,7 @@ FString FAetherPrototypeRouteGuide::BuildObjectiveLabel(const AAetherGameModeBas
 	return TEXT("ROUTE SUMMARY: FOREST PATH TOWARD ELDRAN");
 }
 
+/** 플레이어 사망과 진행 구간을 기준으로 조작 및 재시도 안내를 선택한다. */
 FString FAetherPrototypeRouteGuide::BuildTutorialHintLabel(
 	const AAetherGameModeBase* AetherGameMode,
 	const AAetherfallCharacter* PlayerCharacter)
@@ -155,6 +158,7 @@ FString FAetherPrototypeRouteGuide::BuildTutorialHintLabel(
 	return TEXT("[V] INTERACT / H HEAL / BACKSPACE CLEAR QA PROGRESS");
 }
 
+/** 보스전, 보스 처치 이후 또는 레벨 종료를 강조 구간으로 분류한다. */
 bool FAetherPrototypeRouteGuide::IsCriticalObjective(const AAetherGameModeBase* AetherGameMode)
 {
 	return AetherGameMode &&

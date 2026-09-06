@@ -1,3 +1,4 @@
+/** 상자 열림 이력과 회복 아이템 보상을 처리하고 체크포인트 복원 시 열림 상태를 맞춘다. */
 #include "AetherPrototypeChest.h"
 
 #include "AetherGameModeBase.h"
@@ -47,6 +48,7 @@ void AAetherPrototypeChest::Interact_Implementation(AActor* Interactor)
 	OpenChest(Interactor);
 }
 
+/** 반복 열기 설정을 확인한 뒤 진행 라벨과 보상을 기록하고 상호작용 플레이어에게 회복 아이템을 지급한다. */
 void AAetherPrototypeChest::OpenChest(AActor* Interactor)
 {
 	if (bChestOpened && !bAllowRepeatedOpening)
@@ -80,6 +82,7 @@ void AAetherPrototypeChest::OpenChest(AActor* Interactor)
 	OnChestOpened();
 }
 
+/** 기본 열림 설정과 저장 상태를 합쳐 내부 열림 상태만 복원하며 보상을 다시 지급하지 않는다. */
 void AAetherPrototypeChest::RestorePrototypeCheckpointState(bool bShouldBeOpened)
 {
 	bChestOpened = bStartOpened || bShouldBeOpened;

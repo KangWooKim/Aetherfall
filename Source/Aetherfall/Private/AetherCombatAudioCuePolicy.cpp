@@ -1,3 +1,4 @@
+/** 체력 위험과 게이지 임계값 통과를 한 번씩 알리기 위한 상태를 관리한다. 실제 사운드 재생은 호출자에게 맡긴다. */
 #include "AetherCombatAudioCuePolicy.h"
 
 #include "AetherHealthComponent.h"
@@ -26,6 +27,7 @@ float GetCriticalHealthThreshold(const FAetherPlayerDangerCueConfig& Config)
 }
 }
 
+/** 회복 후 임계값을 벗어난 위험 단계의 재생 기록을 해제해 다음 위험 상황에서 다시 알릴 수 있게 한다. */
 void FAetherCombatAudioCuePolicy::RefreshPlayerDangerStateAfterHeal(
 	const UAetherHealthComponent* HealthComponent,
 	const FAetherPlayerDangerCueConfig& Config,
@@ -48,6 +50,7 @@ void FAetherCombatAudioCuePolicy::RefreshPlayerDangerStateAfterHeal(
 	}
 }
 
+/** 사망, 치명적 체력, 낮은 체력 순으로 필요한 알림을 고르고 중복 재생 방지 상태를 갱신한다. */
 EAetherPlayerDangerCue FAetherCombatAudioCuePolicy::EvaluatePlayerDangerCue(
 	const UAetherHealthComponent* HealthComponent,
 	const FAetherPlayerDangerCueConfig& Config,
@@ -98,6 +101,7 @@ void FAetherCombatAudioCuePolicy::ResetPlayerDangerState(FAetherPlayerDangerCueS
 	State = FAetherPlayerDangerCueState();
 }
 
+/** 이전·현재 게이지를 비교해 임계값을 새로 넘었을 때만 알린다. 최대치와 참격 준비가 겹치면 최대치 알림을 우선한다. */
 EAetherResourceCue FAetherCombatAudioCuePolicy::EvaluateResourceCue(
 	float PreviousAetherGauge,
 	float CurrentAetherGauge,
@@ -128,6 +132,7 @@ EAetherResourceCue FAetherCombatAudioCuePolicy::EvaluateResourceCue(
 	return EAetherResourceCue::None;
 }
 
+/** 소비 후 해당 임계값 아래로 내려간 알림만 다시 재생 가능한 상태로 돌린다. */
 void FAetherCombatAudioCuePolicy::RefreshResourceStateAfterSpend(
 	float CurrentAetherGauge,
 	const FAetherResourceCueConfig& Config,
@@ -161,6 +166,7 @@ float FAetherCombatAudioCuePolicy::GetRandomizedVolume(float BaseVolume, float V
 	return ClampedBaseVolume * FMath::FRandRange(1.0f - ClampedVariance, 1.0f + ClampedVariance);
 }
 
+/** 최소·최대 피치를 정렬하고 하한을 적용한 범위에서 무작위 값을 고른다. */
 float FAetherCombatAudioCuePolicy::GetRandomizedPitch(float MinPitch, float MaxPitch)
 {
 	const float ClampedMinPitch = FMath::Max(0.1f, FMath::Min(MinPitch, MaxPitch));

@@ -1,5 +1,7 @@
+/** 전투 행동 모드를 기존 실행 플래그와 판정용 스냅샷으로 변환한다. 여러 플래그가 함께 켜지면 정해진 우선순위로 대표 모드를 해석한다. */
 #include "AetherCombatActionStatePolicy.h"
 
+/** 새 플래그 묶음을 기본값에서 구성한다. 강공격과 참격은 공통 공격 플래그도 함께 켜진다. */
 FAetherCombatActionRuntimeFlags FAetherCombatActionStatePolicy::BuildFlagsForMode(EAetherCombatActionMode Mode)
 {
 	FAetherCombatActionRuntimeFlags Flags;
@@ -46,6 +48,7 @@ FAetherCombatActionRuntimeFlags FAetherCombatActionStatePolicy::BuildFlagsForMod
 	return Flags;
 }
 
+/** 실행 플래그를 복사하고 소유자의 사망 여부를 추가해 행동 판정의 입력으로 만든다. */
 FAetherCombatActionStateSnapshot FAetherCombatActionStatePolicy::BuildSnapshot(
 	bool bOwnerDead,
 	const FAetherCombatActionRuntimeFlags& RuntimeFlags)
@@ -65,6 +68,7 @@ FAetherCombatActionStateSnapshot FAetherCombatActionStatePolicy::BuildSnapshot(
 	return State;
 }
 
+/** 피격·처형·참격 등의 우선순위로 현재 모드를 해석한다. 결과를 조회할 뿐 입력 플래그를 수정하지 않는다. */
 EAetherCombatActionMode FAetherCombatActionStatePolicy::ResolveDominantMode(const FAetherCombatActionStateSnapshot& State)
 {
 	if (State.bHitReacting)

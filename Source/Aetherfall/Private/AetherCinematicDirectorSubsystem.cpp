@@ -1,3 +1,4 @@
+/** 게임 인스턴스 수명 동안 컷신 요청과 입력·카메라 잠금, 종료 이벤트를 조정한다. 실제 시퀀스 연출은 요청 이벤트를 받은 쪽에서 연결한다. */
 #include "AetherCinematicDirectorSubsystem.h"
 
 #include "AetherfallCharacter.h"
@@ -57,6 +58,7 @@ void UAetherCinematicDirectorSubsystem::RegisterCinematicDefinition(const FAethe
 	CinematicDefinitions.Add(Definition.Trigger, Definition);
 }
 
+/** 등록된 트리거 정의를 복사하고 요청별 이벤트 라벨을 덮어쓴 뒤 컷신을 요청한다. */
 bool UAetherCinematicDirectorSubsystem::RequestCinematicByTrigger(EAetherCinematicTrigger Trigger, FName EventLabel)
 {
 	const FAetherCinematicDefinition* Definition = CinematicDefinitions.Find(Trigger);
@@ -73,6 +75,7 @@ bool UAetherCinematicDirectorSubsystem::RequestCinematicByTrigger(EAetherCinemat
 	return RequestCinematic(RuntimeDefinition);
 }
 
+/** 비활성 정의나 중복 재생 요청을 거절한다. 잠금을 적용한 후 시작·연출 요청 이벤트를 전달하고 대체 종료 타이머를 등록한다. */
 bool UAetherCinematicDirectorSubsystem::RequestCinematic(const FAetherCinematicDefinition& Definition)
 {
 	if (ActiveState.bActive || !Definition.bEnabled)
@@ -93,6 +96,7 @@ bool UAetherCinematicDirectorSubsystem::RequestCinematic(const FAetherCinematicD
 	return true;
 }
 
+/** 건너뛰기가 허용된 활성 컷신만 종료하며, 건너뛰기 이벤트와 공통 종료 경로를 함께 사용한다. */
 bool UAetherCinematicDirectorSubsystem::SkipActiveCinematic()
 {
 	if (!CanSkipActiveCinematic())
@@ -120,6 +124,7 @@ FAetherCinematicRuntimeState UAetherCinematicDirectorSubsystem::GetActiveCinemat
 	return RuntimeState;
 }
 
+/** 현재 월드의 컨트롤러를 잠그고 이동을 중단한다. 해제할 컨트롤러는 약한 참조로 보관한다. */
 void UAetherCinematicDirectorSubsystem::ApplyCinematicLocks(const FAetherCinematicDefinition& Definition)
 {
 	UWorld* World = ResolveRuntimeWorld();
@@ -159,6 +164,7 @@ void UAetherCinematicDirectorSubsystem::ApplyCinematicLocks(const FAetherCinemat
 	}
 }
 
+/** 이 서브시스템이 기록한 유효한 컨트롤러의 컷신 모드를 해제한다. */
 void UAetherCinematicDirectorSubsystem::RestoreCinematicLocks(const FAetherCinematicDefinition& Definition)
 {
 	for (TWeakObjectPtr<APlayerController>& ControllerPtr : LockedControllers)
@@ -179,6 +185,7 @@ void UAetherCinematicDirectorSubsystem::RestoreCinematicLocks(const FAetherCinem
 	LockedControllers.Reset();
 }
 
+/** 타이머와 잠금을 정리하고 활성 상태를 초기화한 뒤 종료 스냅샷을 알린다. 종료 이벤트에서 다음 요청을 시작할 수 있도록 상태를 먼저 비운다. */
 void UAetherCinematicDirectorSubsystem::FinishActiveCinematicInternal(bool bSkipped)
 {
 	if (!ActiveState.bActive)
@@ -203,6 +210,7 @@ void UAetherCinematicDirectorSubsystem::FinishActiveCinematicInternal(bool bSkip
 	OnCinematicFinishedNative.Broadcast(FinishedState);
 }
 
+/** 시퀀스 유무와 자동 종료 설정을 평가해 종료 타이머를 예약한다. 시퀀스를 직접 재생하는 함수는 아니다. */
 void UAetherCinematicDirectorSubsystem::ScheduleFallbackFinish(const FAetherCinematicDefinition& Definition)
 {
 	UWorld* World = ResolveRuntimeWorld();
@@ -225,6 +233,7 @@ void UAetherCinematicDirectorSubsystem::ScheduleFallbackFinish(const FAetherCine
 		false);
 }
 
+/** 소속 월드를 우선 사용하고, 없으면 엔진 컨텍스트에서 실행 또는 PIE 월드를 찾는다. */
 UWorld* UAetherCinematicDirectorSubsystem::ResolveRuntimeWorld() const
 {
 	if (UWorld* World = GetWorld())

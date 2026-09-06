@@ -1,8 +1,10 @@
+/** 대상 유효성, 자가 피해, 체력 컴포넌트와 사망 여부를 확인하고 피해 적용 결과와 거부 사유를 반환한다. */
 #include "AetherCombatDamagePolicy.h"
 
 #include "AetherHealthComponent.h"
 #include "GameFramework/Actor.h"
 
+/** 음수 피해를 0으로 제한하고 공통 사전 조건을 통과한 대상의 체력 컴포넌트에 피해를 위임한다. */
 FAetherCombatDamageResult FAetherCombatDamagePolicy::TryApplyDamage(const FAetherCombatDamageRequest& Request)
 {
 	FAetherCombatDamageResult Result;

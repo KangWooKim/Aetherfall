@@ -1,3 +1,4 @@
+/** 로딩 화면 단계와 편집 가능한 표시 설정, UI에 전달할 읽기 전용 표시 모델을 정의한다. */
 #pragma once
 
 #include "CoreMinimal.h"
@@ -8,6 +9,7 @@
 class UAetherLoadingScreenWidget;
 class UTexture2D;
 
+/** 로딩 표시의 등장·유지·퇴장 단계를 구분한다. */
 UENUM(BlueprintType)
 enum class EAetherLoadingScreenState : uint8
 {
@@ -17,6 +19,7 @@ enum class EAetherLoadingScreenState : uint8
 	FadingOut
 };
 
+/** 로딩 화면의 표시 시간과 페이드·문구 등을 조정한다. */
 USTRUCT(BlueprintType)
 struct FAetherLoadingScreenSettings
 {
@@ -68,6 +71,7 @@ struct FAetherLoadingScreenSettings
 	int32 ViewportZOrder = 10000;
 };
 
+/** 현재 로딩 상태를 화면 위젯이 그릴 값으로 전달한다. */
 USTRUCT(BlueprintType)
 struct FAetherLoadingScreenViewModel
 {

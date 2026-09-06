@@ -1,3 +1,4 @@
+/** 적의 공격 패턴과 상태를 몽타주·대체 애니메이션·효과음 선택 및 재생 속도 설정으로 변환한다. */
 #include "AetherEnemyActionPresentationPolicy.h"
 
 #include "AetherEnemyBase.h"
@@ -36,6 +37,7 @@ FAetherEnemyActionVisualSelection BuildVisualSelection(
 }
 }
 
+/** 공격 이름에 대응하는 몽타주와 대체 애니메이션을 함께 선택해 실행 측에 전달한다. */
 FAetherEnemyActionVisualSelection FAetherEnemyActionPresentationPolicy::BuildAttackVisual(
 	const FAetherEnemyAttackPatternData& AttackPattern,
 	const FAetherEnemyActionVisualAssets& VisualAssets,
@@ -102,6 +104,7 @@ UAnimationAsset* FAetherEnemyActionPresentationPolicy::SelectAttackAnimation(
 	return VisualAssets.StandardAttackAnimation;
 }
 
+/** 프로토타입 애니메이션 구동과 대체 연출 우선 설정이 모두 켜진 경우에만 대체 애니메이션을 우선한다. */
 bool FAetherEnemyActionPresentationPolicy::ShouldPreferFallbackActionAnimation(
 	const FAetherEnemyActionVisualTuning& VisualTuning,
 	const UAnimationAsset* FallbackAnimation)
@@ -111,6 +114,7 @@ bool FAetherEnemyActionPresentationPolicy::ShouldPreferFallbackActionAnimation(
 		FallbackAnimation != nullptr;
 }
 
+/** 이동 속도에 비례한 재생 속도를 설정 범위로 제한하고 0.05 단위로 양자화한다. */
 float FAetherEnemyActionPresentationPolicy::ResolveMoveAnimationPlayRate(
 	float Speed2D,
 	const FAetherEnemyActionVisualTuning& VisualTuning)
@@ -155,6 +159,7 @@ USoundBase* FAetherEnemyActionPresentationPolicy::SelectAttackWindupSound(
 	return SoundSet.HeavyAttackWindupSound;
 }
 
+/** 유효한 효과음과 기본 음량을 확인한 뒤 음량·피치 변화를 적용할 재생 정보를 만든다. */
 FAetherEnemySoundPlayback FAetherEnemyActionPresentationPolicy::BuildSoundPlayback(
 	const USoundBase* Sound,
 	float VolumeMultiplier,

@@ -1,3 +1,4 @@
+/** 전투 완료·보상 수집 조건을 구독하고 진행 문을 열거나 복원하는 레벨 액터다. */
 #include "AetherPrototypeProgressGate.h"
 
 #include "AetherAudioSettingsLibrary.h"
@@ -30,6 +31,7 @@ AAetherPrototypeProgressGate::AAetherPrototypeProgressGate()
 	BlockerVolume->SetCollisionResponseToAllChannels(ECR_Block);
 }
 
+/** 저장된 해금 상태와 보상 조건을 먼저 반영한 뒤 해당 전투 및 보상 이벤트를 구독한다. */
 void AAetherPrototypeProgressGate::BeginPlay()
 {
 	Super::BeginPlay();
@@ -78,6 +80,7 @@ void AAetherPrototypeProgressGate::BeginPlay()
 	}
 }
 
+/** 연결했던 게임 모드의 이벤트를 해제해 종료된 문으로 콜백이 전달되지 않게 한다. */
 void AAetherPrototypeProgressGate::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (AAetherGameModeBase* GameMode = BoundGameMode.Get())
@@ -92,6 +95,7 @@ void AAetherPrototypeProgressGate::EndPlay(const EEndPlayReason::Type EndPlayRea
 	Super::EndPlay(EndPlayReason);
 }
 
+/** 중복 해금을 막고 진행 라벨을 기록한 뒤 충돌·효과·블루프린트 알림을 반영한다. */
 void AAetherPrototypeProgressGate::UnlockGate()
 {
 	if (bGateUnlocked)
@@ -114,6 +118,7 @@ void AAetherPrototypeProgressGate::UnlockGate()
 	OnGateUnlocked();
 }
 
+/** 현재 문을 닫고 충돌을 복구한다. 이미 기록된 해금 라벨 자체를 지우지는 않는다. */
 void AAetherPrototypeProgressGate::LockGate()
 {
 	if (!bGateUnlocked)
@@ -128,6 +133,7 @@ void AAetherPrototypeProgressGate::LockGate()
 	OnGateLocked();
 }
 
+/** 저장 상태와 보상 조건으로 문을 복원하며 일반 해금 연출은 재생하지 않는다. */
 void AAetherPrototypeProgressGate::RestorePrototypeCheckpointState(bool bShouldBeUnlocked)
 {
 	AAetherGameModeBase* GameMode = Cast<AAetherGameModeBase>(UGameplayStatics::GetGameMode(this));
@@ -187,6 +193,7 @@ bool AAetherPrototypeProgressGate::ShouldUnlockFromCollectedReward(const AAether
 		GameMode->HasCollectedPrototypeReward(RequiredRewardLabel);
 }
 
+/** 해금 여부에 맞춰 문 메시와 차단 영역의 충돌 및 가시성을 함께 갱신한다. */
 void AAetherPrototypeProgressGate::ApplyGateState()
 {
 	const bool bShouldBlock = !bGateUnlocked || !bDisableCollisionWhenUnlocked;

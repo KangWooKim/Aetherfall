@@ -7,6 +7,7 @@
 
 class UStaticMeshComponent;
 
+/** 세계관 기록의 수집 라벨·제목·본문과 표시 상태를 관리하는 상호작용 액터다. */
 UCLASS()
 class AETHERFALL_API AAetherPrototypeLorePickup : public AActor, public IAetherInteractableInterface
 {
@@ -16,6 +17,7 @@ public:
 	AAetherPrototypeLorePickup();
 
 	virtual FText GetInteractionPrompt_Implementation(AActor* Interactor) const override;
+	/** 미수집 기록을 진행 이력에 추가하고 제목 피드백·본문 로그 및 Blueprint 수집 이벤트를 제공한다. */
 	virtual void Interact_Implementation(AActor* Interactor) override;
 
 	UFUNCTION(BlueprintPure, Category = "Aetherfall|Prototype|Lore")
@@ -24,6 +26,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Aetherfall|Prototype|Lore")
 	FName GetLoreLabel() const { return LoreLabel; }
 
+	/** 수집 연출을 다시 실행하지 않고 저장된 기록 수집 상태를 표시 계층에 적용한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype|Lore")
 	void RestorePrototypeCheckpointState(bool bShouldBeCollected);
 

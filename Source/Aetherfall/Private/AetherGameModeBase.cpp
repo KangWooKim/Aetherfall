@@ -1,3 +1,4 @@
+/** 전투 구간과 레벨 진행을 조정하고, 체크포인트 저장·복원 및 대화·연출·적 생성 서비스를 연결한다. */
 #include "AetherGameModeBase.h"
 
 #include "AetherAudioSettingsLibrary.h"
@@ -53,6 +54,7 @@ AAetherGameModeBase::AAetherGameModeBase()
 	PrototypeEnemyArchetypeSequence = { EAetherEnemyArchetype::Skirmisher, EAetherEnemyArchetype::Brute };
 }
 
+/** 액터의 시작 처리 전에 저장된 체크포인트 진행 상태를 읽는다. */
 void AAetherGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
@@ -67,6 +69,7 @@ void AAetherGameModeBase::StartPrototypeCombatRound()
 	ShowPrototypeMessage(TEXT("Combat round started"), FColor::Cyan);
 }
 
+/** 저장된 보스 처치 이력을 확인하고, 보스 도입 연출이 필요하면 완료 후 전투 시작을 재개한다. */
 void AAetherGameModeBase::StartPrototypeCombatRoundForEncounter(FName EncounterLabel)
 {
 	if (EncounterLabel == GetPrototypeBossEncounterLabel() && HasCompletedPrototypeEncounter(EncounterLabel))
@@ -95,6 +98,7 @@ void AAetherGameModeBase::StartPrototypeCombatRoundForEncounter(FName EncounterL
 	TryStartPrototypeDialogueForLabeledEvent(TEXT("EncounterStart"), EncounterLabel);
 }
 
+/** 구간 설정 정책이 계산한 실행값을 반영하고 처치 목표 표시를 갱신한다. */
 void AAetherGameModeBase::ApplyPrototypeEncounterConfig(const FAetherPrototypeEncounterConfig& EncounterConfig)
 {
 	const FAetherPrototypeEncounterConfigApplyResult ApplyResult =
@@ -105,6 +109,7 @@ void AAetherGameModeBase::ApplyPrototypeEncounterConfig(const FAetherPrototypeEn
 	ShowPrototypeMessage(ApplyResult.SummaryMessage, FColor::Silver);
 }
 
+/** 적과 공격 슬롯·재생성 타이머를 정리하고 라운드 상태 및 플레이어 전투 자원을 초기화한다. */
 void AAetherGameModeBase::ResetPrototypeCombatRound()
 {
 	GetWorldTimerManager().ClearTimer(PrototypeEnemyRespawnTimerHandle);
@@ -149,6 +154,7 @@ void AAetherGameModeBase::ResetPrototypeCombatRound()
 	ShowPrototypeMessage(TEXT("Combat round reset"), FColor::Cyan);
 }
 
+/** 진행 등급 하락 방지 조건을 통과하면 위치·라벨을 갱신하고 체크포인트 이벤트와 저장을 요청한다. */
 bool AAetherGameModeBase::ActivatePrototypeCheckpoint(const FTransform& CheckpointTransform, FName CheckpointLabel, int32 CheckpointProgressRank)
 {
 	const int32 ResolvedCheckpointProgressRank = FAetherPrototypeCheckpointSnapshot::ResolveProgressRank(CheckpointLabel, CheckpointProgressRank);
@@ -183,6 +189,7 @@ bool AAetherGameModeBase::ActivatePrototypeCheckpoint(const FTransform& Checkpoi
 	return true;
 }
 
+/** 저장 복원 계획에 따라 보스 실행 상태를 정리하고 플레이어 이동, 구간 재시작, 월드·자원 복원을 순서대로 수행한다. */
 void AAetherGameModeBase::ResetPrototypePlayerAtCheckpoint()
 {
 	GetWorldTimerManager().ClearTimer(PrototypeDefeatRetryTimerHandle);
@@ -265,6 +272,7 @@ void AAetherGameModeBase::ResetPrototypePlayerAtCheckpoint()
 	ShowPrototypeMessage(RetryResetPlan.PlayerResetMessage, RetryResetPlan.PlayerResetColor);
 }
 
+/** 체크포인트에 따른 예약 계획을 받은 뒤 기존 재시작 타이머를 지우고 새 지연 시간으로 예약한다. */
 void AAetherGameModeBase::SchedulePrototypePlayerRetryAfterDefeat()
 {
 	const FAetherPrototypeCheckpointRetrySchedulePlan RetrySchedulePlan =
@@ -285,6 +293,7 @@ void AAetherGameModeBase::SchedulePrototypePlayerRetryAfterDefeat()
 	ShowPrototypeMessage(RetrySchedulePlan.FeedbackMessage, RetrySchedulePlan.FeedbackColor);
 }
 
+/** 저장 슬롯 삭제가 성공한 경우에만 실행 중 진행 이력과 체크포인트 표시를 초기화한다. */
 bool AAetherGameModeBase::ClearPrototypeCheckpointProgress()
 {
 	UAetherSaveSubsystem* SaveSubsystem = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAetherSaveSubsystem>() : nullptr;
@@ -528,6 +537,7 @@ float AAetherGameModeBase::GetPrototypeLevelCompleteBannerRemainingTime() const
 	return FMath::Max(0.0f, static_cast<float>(PrototypeLevelCompleteBannerExpireTime - World->GetTimeSeconds()));
 }
 
+/** 완료 상태와 최초 경과 시간을 기록하고 완료 이벤트·대사·저장을 연결한다. 이전 완료를 대성당 결말로 승격하는 경로를 허용한다. */
 void AAetherGameModeBase::CompletePrototypeLevel(FName GoalLabel)
 {
 	const bool bIsCathedralEndingGoal = GoalLabel == GetPrototypeCathedralEndingGoalLabel();
@@ -567,6 +577,7 @@ void AAetherGameModeBase::CompletePrototypeLevel(FName GoalLabel)
 	SavePrototypeCheckpointSnapshot();
 }
 
+/** 중복되지 않은 열쇠 라벨을 진행 집합에 추가하고 획득 이벤트와 대응 대화를 요청한다. */
 void AAetherGameModeBase::CollectPrototypeKey(FName KeyLabel)
 {
 	if (KeyLabel.IsNone() || CollectedPrototypeKeyLabels.Contains(KeyLabel))
@@ -587,6 +598,7 @@ bool AAetherGameModeBase::HasCollectedPrototypeKey(FName KeyLabel) const
 	return !KeyLabel.IsNone() && CollectedPrototypeKeyLabels.Contains(KeyLabel);
 }
 
+/** 보상 라벨의 중복 수집을 막고 진행 이벤트를 발행한다. 실제 보상 수량 지급은 호출 측이 담당한다. */
 void AAetherGameModeBase::CollectPrototypeReward(FName RewardLabel)
 {
 	if (RewardLabel.IsNone() || CollectedPrototypeRewardLabels.Contains(RewardLabel))
@@ -812,6 +824,7 @@ bool AAetherGameModeBase::TryRequestPrototypeCinematic(EAetherCinematicTrigger T
 	return bRequested;
 }
 
+/** 대기 중이던 시작 또는 보스 도입 연출이 끝나면 해당 게임 흐름을 이어간다. */
 void AAetherGameModeBase::HandlePrototypeCinematicFinished(const FAetherCinematicRuntimeState& RuntimeState)
 {
 	if (RuntimeState.Definition.Trigger == EAetherCinematicTrigger::GameIntro && bPrototypeBeginPlayWaitingForIntroCinematic)
@@ -924,6 +937,7 @@ void AAetherGameModeBase::LogPrototypeCheckpointSnapshotQAState(const FString& C
 	UE_LOG(LogTemp, Log, TEXT("[AetherGameMode] %s"), *FAetherPrototypeCheckpointSnapshot::BuildQASummary(Context, BuildPrototypeCheckpointSnapshotState(nullptr)));
 }
 
+/** 저장 스키마를 검증한 후 진행 상태를 채우고, 플레이어 적용 전까지 저장을 지연한다. */
 void AAetherGameModeBase::LoadPrototypeCheckpointSnapshot()
 {
 	UAetherSaveSubsystem* SaveSubsystem = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAetherSaveSubsystem>() : nullptr;
@@ -952,6 +966,7 @@ void AAetherGameModeBase::LoadPrototypeCheckpointSnapshot()
 	LogPrototypeCheckpointSnapshotQAState(TEXT("loaded"));
 }
 
+/** 유효한 체크포인트와 플레이어가 있고 복원 지연이 해제된 경우에만 현재 상태를 저장 슬롯에 기록한다. */
 void AAetherGameModeBase::SavePrototypeCheckpointSnapshot()
 {
 	if (!bHasActivePrototypeCheckpoint)
@@ -959,6 +974,7 @@ void AAetherGameModeBase::SavePrototypeCheckpointSnapshot()
 		return;
 	}
 
+	// 플레이어의 체력·아이템 복원이 끝나기 전에 초기 상태가 기존 저장을 덮어쓰지 않도록 기다린다.
 	if (bDeferPrototypeCheckpointSaveUntilLoadedStateApplied)
 	{
 		ShowPrototypeMessage(
@@ -996,6 +1012,7 @@ void AAetherGameModeBase::SavePrototypeCheckpointSnapshot()
 	}
 }
 
+/** 체크포인트 위치·시점과 체력·회복 아이템을 적용한 뒤 저장 지연을 해제한다. */
 void AAetherGameModeBase::ApplyLoadedPrototypePlayerState()
 {
 	AAetherfallCharacter* PlayerCharacter = Cast<AAetherfallCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
@@ -1037,6 +1054,7 @@ void AAetherGameModeBase::ApplyLoadedPrototypePlayerState()
 	LogPrototypeCheckpointSnapshotQAState(TEXT("applied"));
 }
 
+/** 지원하는 저장 스키마인지 확인한 후 스냅샷 변환 결과를 실행 상태에 반영한다. */
 bool AAetherGameModeBase::PopulatePrototypeCheckpointStateFromSaveGame(const UAetherPrototypeSaveGame* SaveGameObject)
 {
 	if (!SaveGameObject)
@@ -1061,6 +1079,7 @@ bool AAetherGameModeBase::PopulatePrototypeCheckpointStateFromSaveGame(const UAe
 	return true;
 }
 
+/** 사망 후 재시도를 위해 디스크 스냅샷을 다시 읽고 복원 중 덮어쓰기를 막는다. */
 bool AAetherGameModeBase::PreparePrototypeCheckpointRetryRestore()
 {
 	UAetherSaveSubsystem* SaveSubsystem = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAetherSaveSubsystem>() : nullptr;
@@ -1081,6 +1100,7 @@ bool AAetherGameModeBase::PreparePrototypeCheckpointRetryRestore()
 	return true;
 }
 
+/** 스냅샷의 라벨 집합을 월드 복원기에 전달해 상호작용 액터 상태를 맞춘다. */
 void AAetherGameModeBase::RefreshPrototypeCheckpointWorldState()
 {
 	FAetherPrototypeCheckpointWorldRestorer::RestoreWorldState(this, BuildPrototypeCheckpointSnapshotState(nullptr));
@@ -1134,6 +1154,7 @@ void AAetherGameModeBase::DestroyPrototypeDamageTarget()
 	CurrentPrototypeDamageTarget.Reset();
 }
 
+/** 생성 정책으로 위치·원형을 결정하고 지연 생성을 통해 원형을 먼저 적용한 뒤 사망 이벤트를 연결한다. */
 void AAetherGameModeBase::SpawnPrototypeEnemy()
 {
 	UWorld* World = GetWorld();
@@ -1209,6 +1230,7 @@ void AAetherGameModeBase::DestroyPrototypeEnemies()
 	CurrentPrototypeEnemies.Reset();
 }
 
+/** 보스 구간 복원 전에 공격 예약과 락온, 이전 아우렐 인스턴스를 정리한다. */
 void AAetherGameModeBase::ResetPrototypeBossEncounterRuntimeForCheckpointRestore(FName RuntimeEncounterLabel)
 {
 	if (RuntimeEncounterLabel != GetPrototypeBossEncounterLabel())
@@ -1326,6 +1348,7 @@ void AAetherGameModeBase::SchedulePrototypeEnemyRespawn()
 	ShowPrototypeMessage(FString::Printf(TEXT("Enemy refill in %.1f sec"), PrototypeEnemyRespawnDelay), FColor::Yellow);
 }
 
+/** 사망한 적의 공격 슬롯을 반환하고 라운드 정책 결과에 따라 목표 알림, 완료 또는 보충 생성을 수행한다. */
 void AAetherGameModeBase::HandlePrototypeEnemyDeath(UAetherHealthComponent* DeadHealthComponent, AActor* DamageCauser)
 {
 	for (const TWeakObjectPtr<AAetherEnemyBase>& EnemyPtr : CurrentPrototypeEnemies)
@@ -1387,6 +1410,7 @@ void AAetherGameModeBase::HandlePrototypeEnemyDeath(UAetherHealthComponent* Dead
 	}
 }
 
+/** 완료 처리를 중복 실행하지 않도록 상태를 먼저 기록하고, 보상·구간 이벤트·저장·보스 후속 연출을 처리한다. */
 void AAetherGameModeBase::CompletePrototypeCombatRound()
 {
 	if (bPrototypeCombatRoundComplete)

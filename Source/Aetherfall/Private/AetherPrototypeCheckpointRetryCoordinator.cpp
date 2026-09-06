@@ -1,3 +1,4 @@
+/** 패배 후 재시도 예약 여부와 보스 정리·구간 재시작·저장 복원 절차를 실행 계획으로 계산한다. */
 #include "AetherPrototypeCheckpointRetryCoordinator.h"
 
 void FAetherPrototypeCheckpointRetryCoordinator::ClearScheduledRetry()
@@ -5,6 +6,7 @@ void FAetherPrototypeCheckpointRetryCoordinator::ClearScheduledRetry()
 	bDefeatRetryScheduled = false;
 }
 
+/** 체크포인트가 있으면 예약 플래그와 지연 시간을 반환한다. 실제 기존 타이머 교체는 게임 모드가 담당한다. */
 FAetherPrototypeCheckpointRetrySchedulePlan FAetherPrototypeCheckpointRetryCoordinator::ScheduleAfterDefeat(
 	bool bHasActiveCheckpoint,
 	float RetryDelaySeconds)
@@ -26,6 +28,7 @@ FAetherPrototypeCheckpointRetrySchedulePlan FAetherPrototypeCheckpointRetryCoord
 	return Plan;
 }
 
+/** 복원 전 보스 상태와 복원 후 처치 이력을 비교하여 보스 정리 및 구간 재시작 여부를 결정한다. */
 FAetherPrototypeCheckpointRetryResetPlan FAetherPrototypeCheckpointRetryCoordinator::BuildResetPlan(
 	const FAetherPrototypeCheckpointRetryResetInput& Input) const
 {

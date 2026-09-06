@@ -1,3 +1,4 @@
+/** 메인 메뉴와 일시 정지 메뉴가 공유하는 UMG 화면을 구성하고 저장 선택·설정 편집·확인 팝업을 서브시스템에 연결한다. */
 #include "AetherMainMenuWidget.h"
 
 #include "AetherMenuFlowSubsystem.h"
@@ -57,6 +58,7 @@ namespace
 	}
 }
 
+/** 기존 루트 위젯이 없을 때만 C++ 기본 위젯 트리를 구성한다. */
 TSharedRef<SWidget> UAetherMainMenuWidget::RebuildWidget()
 {
 	if (WidgetTree && !WidgetTree->RootWidget)
@@ -66,6 +68,7 @@ TSharedRef<SWidget> UAetherMainMenuWidget::RebuildWidget()
 	return Super::RebuildWidget();
 }
 
+/** 화면 생성 후 동작을 연결하고 저장 상태와 초기 포커스를 갱신하며 흐름·설정 이벤트를 구독한다. */
 void UAetherMainMenuWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -115,6 +118,7 @@ FReply UAetherMainMenuWidget::NativeOnKeyDown(const FGeometry& InGeometry, const
 	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
+/** 메뉴 문맥에 맞춰 탐색 버튼, 콘텐츠 전환기, 설정 제어 및 팝업·로딩 레이어를 생성한다. */
 void UAetherMainMenuWidget::BuildWidgetTree()
 {
 	UOverlay* Root = WidgetTree->ConstructWidget<UOverlay>(UOverlay::StaticClass(), TEXT("Root"));
@@ -545,6 +549,7 @@ UVerticalBox* UAetherMainMenuWidget::BuildSettingsCategory(const FText& Heading)
 	return Content;
 }
 
+/** 중복 연결을 막고 버튼·품질 선택 이벤트를 각 처리 함수에 연결한다. */
 void UAetherMainMenuWidget::BindActions()
 {
 	if (bActionsBound)
@@ -580,6 +585,7 @@ void UAetherMainMenuWidget::BindActions()
 	}
 }
 
+/** 슬롯 존재 여부와 실제 로드 가능 여부를 구분해 계속하기·불러오기 버튼 및 저장 요약을 갱신한다. */
 void UAetherMainMenuWidget::RefreshSaveState()
 {
 	if (MenuContext == EAetherMenuContext::PauseMenu)
@@ -636,6 +642,7 @@ void UAetherMainMenuWidget::ShowLoadScreen()
 	(LoadSelectedButton->GetIsEnabled() ? LoadSelectedButton.Get() : LoadBackButton.Get())->SetKeyboardFocus();
 }
 
+/** 설정 편집 세션을 시작하고 보류 스냅샷을 화면 제어값에 복사한다. */
 void UAetherMainMenuWidget::ShowSettingsScreen()
 {
 	ActiveContentIndex = 2;
@@ -708,6 +715,7 @@ void UAetherMainMenuWidget::SetLoadingState(bool bLoading, const FText& Message)
 	SetIsEnabled(!bLoading);
 }
 
+/** 보류 설정을 UI에 반영하며 현재 해상도·프레임 제한값이 목록에 없으면 추가한다. */
 void UAetherMainMenuWidget::SynchronizeSettingsControls()
 {
 	UAetherSettingsSubsystem* SettingsSubsystem = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAetherSettingsSubsystem>() : nullptr;
@@ -771,6 +779,7 @@ void UAetherMainMenuWidget::SynchronizeSettingsControls()
 	ScreenShakeSpinBox->SetValue(Settings.Custom.ScreenShakeScale * 100.0f);
 }
 
+/** UI 제어값을 설정 스냅샷으로 모으고 백분율 표시 음량·화면 흔들림을 저장 단위로 환산한다. */
 FAetherSettingsSnapshot UAetherMainMenuWidget::CollectSettingsControls() const
 {
 	FAetherSettingsSnapshot Settings = GetGameInstance() && GetGameInstance()->GetSubsystem<UAetherSettingsSubsystem>()
@@ -835,6 +844,7 @@ void UAetherMainMenuWidget::ApplyOverallQualitySelection(int32 QualityLevel)
 	}
 }
 
+/** 로딩·팝업·설정 편집 상태에 따라 뒤로 가기를 처리하고, 표시 설정 확인 중에는 변경을 되돌린다. */
 void UAetherMainMenuWidget::HandleBack()
 {
 	if (LoadingOverlay->GetVisibility() == ESlateVisibility::Visible)
@@ -888,6 +898,7 @@ void UAetherMainMenuWidget::HandleContinueClicked()
 	}
 }
 
+/** 기존 진행 슬롯이 있으면 덮어쓰기 팝업을 거치고, 없으면 새 게임을 직접 요청한다. */
 void UAetherMainMenuWidget::HandleNewGameClicked()
 {
 	const UAetherSaveSubsystem* Save = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAetherSaveSubsystem>() : nullptr;
@@ -941,6 +952,7 @@ void UAetherMainMenuWidget::HandleQuitClicked()
 
 void UAetherMainMenuWidget::HandleBackClicked() { HandleBack(); }
 
+/** 현재 팝업의 목적에 따라 새 게임·종료·메뉴 복귀·표시 설정 확정을 수행한다. */
 void UAetherMainMenuWidget::HandlePopupConfirmClicked()
 {
 	const EPopupAction Action = ActivePopupAction;
@@ -992,6 +1004,7 @@ void UAetherMainMenuWidget::HandlePopupCancelClicked()
 	HidePopup();
 }
 
+/** 화면 값을 보류 설정에 반영하고 표시 모드 변경이 있으면 유지 여부를 묻는 팝업을 연다. */
 void UAetherMainMenuWidget::HandleSettingsApplyClicked()
 {
 	if (UAetherSettingsSubsystem* Settings = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAetherSettingsSubsystem>() : nullptr)
@@ -1037,6 +1050,7 @@ UWidget* UAetherMainMenuWidget::HandleGenerateComboWidget(FString Item)
 	return BuildText(FText::FromString(Item), 14, AetherIvory);
 }
 
+/** 사용자가 변경한 선택만 프리셋으로 적용하여 프로그램에 의한 값 동기화가 재진입하지 않게 한다. */
 void UAetherMainMenuWidget::HandleOverallQualityChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
 	if (SelectionType != ESelectInfo::Direct)
@@ -1053,6 +1067,7 @@ void UAetherMainMenuWidget::HandleIndividualQualityChanged(FString SelectedItem,
 	}
 }
 
+/** 맵 전환 동안 입력을 잠그고 실패 시 입력을 복원해 오류 내용을 표시한다. */
 void UAetherMainMenuWidget::HandleMenuFlowChanged(EAetherMenuFlowState State, FText Message)
 {
 	if (State == EAetherMenuFlowState::Transitioning)

@@ -1,3 +1,4 @@
+/** 필수 구간 완료 조건을 만족한 플레이어 진입을 레벨 완료 요청과 연출 이벤트로 연결한다. */
 #include "AetherPrototypeLevelGoal.h"
 
 #include "AetherGameModeBase.h"
@@ -54,12 +55,14 @@ void AAetherPrototypeLevelGoal::ResetLevelGoal()
 	ShowGoalMessage(FString::Printf(TEXT("Level goal reset (%s)"), *GoalLabel.ToString()), FColor::Cyan);
 }
 
+/** 저장된 완료 여부에 맞춰 목표 트리거의 재진입 가능 상태를 복원한다. */
 void AAetherPrototypeLevelGoal::RestorePrototypeCheckpointState(bool bShouldBeCompleted)
 {
 	bHasCompleted = bShouldBeCompleted;
 	SetTriggerActive(!(bDisableAfterCompletion && bHasCompleted));
 }
 
+/** 플레이어 진입과 선행 조건을 확인하고 완료 상태를 기록한 뒤 게임 모드·Blueprint 연출에 알린다. */
 void AAetherPrototypeLevelGoal::HandleTriggerBeginOverlap(
 	UPrimitiveComponent* OverlappedComponent,
 	AActor* OtherActor,
@@ -120,6 +123,7 @@ void AAetherPrototypeLevelGoal::HandleTriggerBeginOverlap(
 	}
 }
 
+/** 선행 구간 조건이 없으면 허용하고, 있으면 게임 모드의 해당 구간 완료 이력을 확인한다. */
 bool AAetherPrototypeLevelGoal::CanCompleteGoal() const
 {
 	if (!bRequireCompletedEncounterLabel)

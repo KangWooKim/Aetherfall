@@ -1,3 +1,4 @@
+/** 설정 서브시스템의 오디오 분류를 적용해 2D·월드 위치 사운드를 재생하는 Blueprint 공용 진입점이다. */
 #include "AetherAudioSettingsLibrary.h"
 
 #include "AetherSettingsSubsystem.h"
@@ -7,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 
+/** 유효한 사운드에 현재 SoundMix와 분류별 SoundClass를 적용한 뒤 재생한다. 사운드가 없으면 null을 반환한다. */
 UAudioComponent* UAetherAudioSettingsLibrary::SpawnSound2DForCategory(
 	const UObject* WorldContextObject,
 	USoundBase* Sound,
@@ -45,6 +47,7 @@ UAudioComponent* UAetherAudioSettingsLibrary::SpawnSound2DForCategory(
 	return AudioComponent;
 }
 
+/** 월드 위치에서 사운드를 생성하고 설정된 오디오 분류를 연결한다. 볼륨과 피치는 재생 가능한 하한으로 보정한다. */
 UAudioComponent* UAetherAudioSettingsLibrary::SpawnSoundAtLocationForCategory(
 	const UObject* WorldContextObject,
 	USoundBase* Sound,

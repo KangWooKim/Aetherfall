@@ -1,8 +1,10 @@
+/** 영상 설정과 사용자 설정을 정의하고 편집·적용·복구에 사용할 스냅샷으로 묶는다. */
 #pragma once
 
 #include "CoreMinimal.h"
 #include "AetherSettingsTypes.generated.h"
 
+/** 메뉴의 창 모드 선택값을 엔진 창 모드로 변환하기 위한 구분이다. */
 UENUM(BlueprintType)
 enum class EAetherWindowMode : uint8
 {
@@ -11,6 +13,7 @@ enum class EAetherWindowMode : uint8
 	Windowed
 };
 
+/** 자막 표시 계층에서 사용할 크기 선택값이다. */
 UENUM(BlueprintType)
 enum class EAetherSubtitleSize : uint8
 {
@@ -19,6 +22,7 @@ enum class EAetherSubtitleSize : uint8
 	Large
 };
 
+/** 사운드 재생을 설정 서브시스템의 분류별 볼륨에 연결한다. */
 UENUM(BlueprintType)
 enum class EAetherAudioCategory : uint8
 {
@@ -29,6 +33,7 @@ enum class EAetherAudioCategory : uint8
 	Ui
 };
 
+/** 엔진 영상 설정에 적용할 화면 모드·해상도·품질 값을 묶는다. */
 USTRUCT(BlueprintType)
 struct AETHERFALL_API FAetherVideoSettings
 {
@@ -49,6 +54,7 @@ struct AETHERFALL_API FAetherVideoSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Video", meta = (ClampMin = "25.0", ClampMax = "100.0"))
 	float ResolutionScale = 100.0f;
 
+	/** 0 이상이면 통합 품질을 사용하고 -1이면 개별 품질 항목을 적용한다. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Graphics", meta = (ClampMin = "-1", ClampMax = "4"))
 	int32 OverallQuality = 3;
 
@@ -83,6 +89,7 @@ struct AETHERFALL_API FAetherVideoSettings
 	int32 ShadingQuality = 3;
 };
 
+/** 별도 SaveGame으로 저장하는 오디오·자막·카메라·접근성 설정이다. */
 USTRUCT(BlueprintType)
 struct AETHERFALL_API FAetherCustomSettings
 {
@@ -137,6 +144,7 @@ struct AETHERFALL_API FAetherCustomSettings
 	float ScreenShakeScale = 1.0f;
 };
 
+/** 영상과 사용자 설정을 함께 복사하여 편집·취소·화면 변경 복구에 사용한다. */
 USTRUCT(BlueprintType)
 struct AETHERFALL_API FAetherSettingsSnapshot
 {

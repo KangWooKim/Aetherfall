@@ -6,6 +6,7 @@
 
 class UAnimMontage;
 
+/** 콤보별 약공격 비용·판정·연출을 에셋에서 조정하는 데이터다. */
 USTRUCT(BlueprintType)
 struct FAetherCombatLightAttackData
 {
@@ -39,6 +40,7 @@ private:
 	float TraceRadius = 75.0f;
 };
 
+/** 강공격과 반격의 피해·비용·타이밍을 조정하는 데이터다. */
 USTRUCT(BlueprintType)
 struct FAetherCombatHeavyAttackData
 {
@@ -84,6 +86,7 @@ private:
 	float TraceRadius = 90.0f;
 };
 
+/** 검기 발사의 비용·이동·판정·연출 설정을 묶는다. */
 USTRUCT(BlueprintType)
 struct FAetherCombatAetherSlashData
 {
@@ -129,6 +132,7 @@ private:
 	float TraceRadius = 85.0f;
 };
 
+/** 약공격·강공격·원거리 참격의 수치와 몽타주를 묶는 선택적 조정 데이터다. 행동별 덮어쓰기 플래그가 켜진 항목만 전투 컴포넌트가 사용한다. */
 UCLASS(BlueprintType)
 class AETHERFALL_API UAetherCombatActionDataAsset : public UDataAsset
 {

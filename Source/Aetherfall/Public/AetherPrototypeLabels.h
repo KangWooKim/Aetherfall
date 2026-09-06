@@ -1,3 +1,4 @@
+/** 전투 구간·열쇠·보상·기록·결말이 공유하는 라벨을 한곳에 정의하여 문자열 중복을 줄인다. */
 #pragma once
 
 #include "CoreMinimal.h"

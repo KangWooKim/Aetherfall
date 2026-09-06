@@ -1,5 +1,7 @@
+/** 행동 시작·중단·재시작 이유를 타이머 해제 계획으로 변환한다. 실제 TimerManager 접근은 전투 컴포넌트가 담당한다. */
 #include "AetherCombatActionTimerPolicy.h"
 
+/** 전이 이유별로 해제할 타이머만 지정한다. 피격 중단은 기존 무적 종료 타이머를 유지하고 전체 초기화는 모든 관련 타이머를 지운다. */
 FAetherCombatActionTimerClearPlan FAetherCombatActionTimerPolicy::BuildClearPlan(EAetherCombatActionTimerClearReason Reason)
 {
 	switch (Reason)
@@ -83,6 +85,7 @@ FAetherCombatActionTimerClearPlan FAetherCombatActionTimerPolicy::BuildActionSta
 	return Plan;
 }
 
+/** 실행 중 행동과 지연 판정이 다음 상태에 남지 않도록 전체 해제 플래그를 구성한다. */
 FAetherCombatActionTimerClearPlan FAetherCombatActionTimerPolicy::BuildFullInterruptPlan()
 {
 	FAetherCombatActionTimerClearPlan Plan;

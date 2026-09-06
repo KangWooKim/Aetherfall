@@ -1,5 +1,7 @@
+/** 구간 설정의 덮어쓰기 플래그와 범위 제한을 적용해 게임 모드가 사용할 실행 설정을 계산한다. */
 #include "AetherPrototypeEncounterConfigPolicy.h"
 
+/** 현재값을 출발점으로 선택된 항목만 덮어쓰고, 보상 비활성 구간에서는 이전 완료 보상 정보를 비운다. */
 FAetherPrototypeEncounterConfigApplyResult FAetherPrototypeEncounterConfigPolicy::BuildRuntimeConfig(
 	const FAetherPrototypeEncounterConfig& EncounterConfig,
 	const FAetherPrototypeEncounterRuntimeConfig& CurrentRuntimeConfig)
@@ -50,6 +52,7 @@ int32 FAetherPrototypeEncounterConfigPolicy::ResolveRoundKillGoal(
 	return bOverrideRoundKillGoal ? FMath::Max(1, OverrideRoundKillGoal) : CurrentRoundKillGoal;
 }
 
+/** 덮어쓰기가 켜져 있고 목록이 비어 있지 않을 때만 새 적 원형 순서를 채택한다. */
 TArray<EAetherEnemyArchetype> FAetherPrototypeEncounterConfigPolicy::ResolveEnemyArchetypeSequence(
 	bool bOverrideEnemyArchetypeSequence,
 	const TArray<EAetherEnemyArchetype>& OverrideEnemyArchetypeSequence,

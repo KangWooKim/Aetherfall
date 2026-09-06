@@ -4,6 +4,7 @@
 #include "AetherEnemyBase.h"
 #include "AetherPrototypeEncounterConfig.generated.h"
 
+/** 구간별 적 수·처치 목표·원형 목록의 덮어쓰기 여부와 완료 보상을 정의한다. */
 USTRUCT(BlueprintType)
 struct AETHERFALL_API FAetherPrototypeEncounterConfig
 {

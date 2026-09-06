@@ -1,3 +1,4 @@
+/** 현재 설정과 편집 중 설정을 분리하고 적용·저장·화면 변경 확인 및 시간 초과 복구를 조정한다. */
 #include "AetherSettingsSubsystem.h"
 
 #include "HAL/PlatformTime.h"
@@ -122,6 +123,7 @@ namespace
 	}
 }
 
+/** 엔진 영상 설정과 별도 사용자 저장을 읽고 허용 범위로 보정한 뒤 런타임 설정을 적용한다. */
 void UAetherSettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -160,6 +162,7 @@ void UAetherSettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	ApplyRuntimeCustomSettings(CurrentSettings.Custom);
 }
 
+/** 화면 확인 틱커와 적용했던 사운드 믹스를 정리한다. */
 void UAetherSettingsSubsystem::Deinitialize()
 {
 	ClearVideoConfirmationTimer();
@@ -171,6 +174,7 @@ void UAetherSettingsSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
+/** 확인 대기가 아니면 실제 영상 설정을 다시 읽고 현재 스냅샷을 편집본으로 복사한다. */
 void UAetherSettingsSubsystem::BeginSettingsEdit()
 {
 	if (!bAwaitingVideoConfirmation)
@@ -180,12 +184,14 @@ void UAetherSettingsSubsystem::BeginSettingsEdit()
 	PendingSettings = CurrentSettings;
 }
 
+/** 외부 편집본을 복사하고 지원 해상도와 수치 범위에 맞춰 보정한다. */
 void UAetherSettingsSubsystem::SetPendingSettings(const FAetherSettingsSnapshot& InSettings)
 {
 	PendingSettings = InSettings;
 	SanitizeSettings(PendingSettings);
 }
 
+/** 복구용 스냅샷을 보존하고 설정을 적용한다. 해상도나 창 모드가 바뀌면 실시간 기준 15초 확인 절차를 시작한다. */
 bool UAetherSettingsSubsystem::ApplyPendingSettings()
 {
 	if (bAwaitingVideoConfirmation)
@@ -207,6 +213,7 @@ bool UAetherSettingsSubsystem::ApplyPendingSettings()
 	{
 		bAwaitingVideoConfirmation = true;
 		ClearVideoConfirmationTimer();
+		// 일시 정지 메뉴에서도 확인 제한 시간이 흐르도록 월드 타이머 대신 플랫폼 시간을 사용한다.
 		VideoConfirmationDeadlineSeconds = FPlatformTime::Seconds() + VideoConfirmationDurationSeconds;
 		VideoConfirmationTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
 			FTickerDelegate::CreateUObject(this, &UAetherSettingsSubsystem::TickVideoConfirmation),
@@ -222,6 +229,7 @@ bool UAetherSettingsSubsystem::ApplyPendingSettings()
 	return true;
 }
 
+/** 화면 확인 대기가 아닐 때 편집본을 현재 적용값으로 되돌린다. */
 void UAetherSettingsSubsystem::CancelPendingSettings()
 {
 	if (!bAwaitingVideoConfirmation)
@@ -239,6 +247,7 @@ void UAetherSettingsSubsystem::RestorePendingDefaults()
 	}
 }
 
+/** 품질 단계에 맞는 렌더링 항목과 해상도 비율·프레임 제한을 구성한다. 실제 성능 측정 결과를 의미하지는 않는다. */
 FAetherSettingsSnapshot UAetherSettingsSubsystem::BuildPerformancePresetSettings(int32 QualityLevel, const FAetherSettingsSnapshot& BaseSettings) const
 {
 	FAetherSettingsSnapshot Preset = BaseSettings;
@@ -264,6 +273,7 @@ FAetherSettingsSnapshot UAetherSettingsSubsystem::BuildPerformancePresetSettings
 	return Preset;
 }
 
+/** 확인 기한을 해제하고 현재 화면 모드를 엔진 설정에 확정·저장한다. */
 void UAetherSettingsSubsystem::ConfirmVideoSettings()
 {
 	if (!bAwaitingVideoConfirmation)
@@ -281,6 +291,7 @@ void UAetherSettingsSubsystem::ConfirmVideoSettings()
 	OnVideoConfirmationChanged.Broadcast(false);
 }
 
+/** 화면 변경 전 영상·사용자 설정을 함께 복원하고 편집본과 저장값도 맞춘다. */
 void UAetherSettingsSubsystem::RevertVideoSettings()
 {
 	if (!bAwaitingVideoConfirmation)
@@ -315,6 +326,7 @@ float UAetherSettingsSubsystem::GetVideoConfirmationSecondsRemaining() const
 	return FMath::Max(0.0, VideoConfirmationDeadlineSeconds - FPlatformTime::Seconds());
 }
 
+/** 전체 음소거를 우선 적용하고 마스터 볼륨과 분류별 볼륨의 곱을 반환한다. */
 float UAetherSettingsSubsystem::GetEffectiveAudioVolume(EAetherAudioCategory Category) const
 {
 	const FAetherCustomSettings& Settings = CurrentSettings.Custom;
@@ -372,6 +384,7 @@ USoundClass* UAetherSettingsSubsystem::GetSoundClassForCategory(EAetherAudioCate
 	}
 }
 
+/** 사운드 믹스를 한 번 등록하고 현재 설정 스냅샷의 마스터·분류별 볼륨을 반영한다. */
 void UAetherSettingsSubsystem::EnsureSoundMixApplied()
 {
 	UWorld* World = GetWorld();
@@ -407,6 +420,7 @@ void UAetherSettingsSubsystem::EnsureSoundMixApplied()
 	}
 }
 
+/** 엔진의 영상 설정을 스냅샷으로 읽는다. 별도 사용자 설정 저장은 이 함수에서 읽지 않는다. */
 FAetherSettingsSnapshot UAetherSettingsSubsystem::CaptureCurrentSettings() const
 {
 	FAetherSettingsSnapshot Snapshot;
@@ -461,6 +475,7 @@ FAetherSettingsSnapshot UAetherSettingsSubsystem::BuildDefaultSettings() const
 	return Defaults;
 }
 
+/** 수치 범위를 제한하고 지원하지 않는 전체 화면 해상도를 현재 또는 지원 해상도로 대체한다. */
 void UAetherSettingsSubsystem::SanitizeSettings(FAetherSettingsSnapshot& Settings) const
 {
 	Settings.Video.Resolution.X = FMath::Clamp(Settings.Video.Resolution.X, 640, 7680);
@@ -500,6 +515,7 @@ void UAetherSettingsSubsystem::SanitizeSettings(FAetherSettingsSnapshot& Setting
 	Settings.Custom.ScreenShakeScale = FMath::Clamp(Settings.Custom.ScreenShakeScale, 0.0f, 1.0f);
 }
 
+/** 이전 또는 현재 버전의 사용자 설정만 읽고 미래 버전이나 손상된 저장은 기본값으로 유지한다. */
 void UAetherSettingsSubsystem::LoadCustomSettings()
 {
 	if (!UGameplayStatics::DoesSaveGameExist(SettingsSlotName, SettingsUserIndex))
@@ -531,6 +547,7 @@ bool UAetherSettingsSubsystem::SaveCustomSettings() const
 	return UGameplayStatics::SaveGameToSlot(SaveGame, SettingsSlotName, SettingsUserIndex);
 }
 
+/** 통합 품질 또는 개별 품질을 엔진에 적용한 뒤 해상도와 거리별 렌더링 예산을 반영한다. */
 void UAetherSettingsSubsystem::ApplyVideoSettings(const FAetherVideoSettings& Settings)
 {
 	UGameUserSettings* UserSettings = UGameUserSettings::GetGameUserSettings();
@@ -568,6 +585,7 @@ void UAetherSettingsSubsystem::ApplyVideoSettings(const FAetherVideoSettings& Se
 	ApplyDistanceRenderingBudget(Settings);
 }
 
+/** 선택한 품질을 시야·식생·그림자 거리 및 메시 상세도 콘솔 변수에 연결한다. */
 void UAetherSettingsSubsystem::ApplyDistanceRenderingBudget(const FAetherVideoSettings& Settings)
 {
 	const int32 ViewDistanceQuality = Settings.OverallQuality >= 0 ? Settings.OverallQuality : Settings.ViewDistanceQuality;
@@ -623,6 +641,7 @@ bool UAetherSettingsSubsystem::HasDisplayModeChanged(const FAetherVideoSettings&
 	return A.WindowMode != B.WindowMode || A.Resolution != B.Resolution;
 }
 
+/** 월드 일시 정지와 별개인 플랫폼 시간을 비교해 확인 기한이 지나면 이전 설정으로 복구한다. */
 bool UAetherSettingsSubsystem::TickVideoConfirmation(float DeltaTime)
 {
 	if (!bAwaitingVideoConfirmation)
@@ -639,6 +658,7 @@ bool UAetherSettingsSubsystem::TickVideoConfirmation(float DeltaTime)
 	return false;
 }
 
+/** 등록된 코어 틱커를 제거하고 확인 기한을 초기화한다. */
 void UAetherSettingsSubsystem::ClearVideoConfirmationTimer()
 {
 	if (VideoConfirmationTickerHandle.IsValid())

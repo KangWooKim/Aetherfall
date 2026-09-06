@@ -1,9 +1,11 @@
+/** 컷신 트리거, 디자이너가 조정하는 연출 정의와 UI에 전달할 실행 상태를 담는다. 시퀀스 참조는 필요할 때 연결할 수 있는 소프트 참조다. */
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/SoftObjectPtr.h"
 #include "AetherCinematicTypes.generated.h"
 
+/** 게임 진행 사건과 컷신 정의를 연결하는 트리거 종류다. */
 UENUM(BlueprintType)
 enum class EAetherCinematicTrigger : uint8
 {
@@ -13,6 +15,7 @@ enum class EAetherCinematicTrigger : uint8
 	Custom
 };
 
+/** 컷신 자산과 잠금·건너뛰기·대체 종료 조건을 디자이너가 설정한다. */
 USTRUCT(BlueprintType)
 struct FAetherCinematicDefinition
 {
@@ -66,6 +69,7 @@ struct FAetherCinematicDefinition
 	bool bAutoFinishWhenNoSequenceAsset = true;
 };
 
+/** 현재 컷신의 활성 상태와 요청 정보를 외부 표시 계층에 전달한다. */
 USTRUCT(BlueprintType)
 struct FAetherCinematicRuntimeState
 {

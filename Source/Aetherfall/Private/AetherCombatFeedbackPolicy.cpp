@@ -1,8 +1,10 @@
+/** 전투 사건을 시각 효과와 효과음에 연결하며, 전용 자산이 없을 때 지정된 대체 자산을 선택한다. */
 #include "AetherCombatFeedbackPolicy.h"
 
 #include "Particles/ParticleSystem.h"
 #include "Sound/SoundBase.h"
 
+/** 반격·처형·가드의 전용 효과가 비어 있으면 각 분기의 대체 효과를 반환한다. */
 UParticleSystem* FAetherCombatFeedbackPolicy::SelectImpactEffect(
 	EAetherCombatFeedbackType FeedbackType,
 	const FAetherCombatFeedbackAssets& FeedbackAssets)
@@ -30,6 +32,7 @@ UParticleSystem* FAetherCombatFeedbackPolicy::SelectImpactEffect(
 	}
 }
 
+/** 전투 사건별 효과음을 선택하고, 대응 자산이 없는 종류는 재생하지 않도록 빈 값을 반환한다. */
 USoundBase* FAetherCombatFeedbackPolicy::SelectImpactSound(
 	EAetherCombatFeedbackType FeedbackType,
 	const FAetherCombatFeedbackAssets& FeedbackAssets)

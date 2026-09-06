@@ -27,6 +27,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAetherPrototypeKeyEventSignature, F
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAetherPrototypeRewardEventSignature, FName, RewardLabel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAetherPrototypeLoreEventSignature, FName, LoreLabel);
 
+/** 전투 구간과 레벨 진행을 조정하고, 체크포인트 저장·복원 및 대화·연출·적 생성 서비스를 연결한다. */
 UCLASS()
 class AETHERFALL_API AAetherGameModeBase : public AGameModeBase
 {
@@ -38,24 +39,31 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype")
 	void StartPrototypeCombatRound();
 
+	/** 저장된 보스 처치 이력을 확인하고, 보스 도입 연출이 필요하면 완료 후 전투 시작을 재개한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype")
 	void StartPrototypeCombatRoundForEncounter(FName EncounterLabel);
 
+	/** 구간 설정 정책이 계산한 실행값을 반영하고 처치 목표 표시를 갱신한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype")
 	void ApplyPrototypeEncounterConfig(const FAetherPrototypeEncounterConfig& EncounterConfig);
 
+	/** 적과 공격 슬롯·재생성 타이머를 정리하고 라운드 상태 및 플레이어 전투 자원을 초기화한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype")
 	void ResetPrototypeCombatRound();
 
+	/** 진행 등급 하락 방지 조건을 통과하면 위치·라벨을 갱신하고 체크포인트 이벤트와 저장을 요청한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype|Checkpoint")
 	bool ActivatePrototypeCheckpoint(const FTransform& CheckpointTransform, FName CheckpointLabel, int32 CheckpointProgressRank = 0);
 
+	/** 저장 복원 계획에 따라 보스 실행 상태를 정리하고 플레이어 이동, 구간 재시작, 월드·자원 복원을 순서대로 수행한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype|Checkpoint")
 	void ResetPrototypePlayerAtCheckpoint();
 
+	/** 체크포인트에 따른 예약 계획을 받은 뒤 기존 재시작 타이머를 지우고 새 지연 시간으로 예약한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype|Checkpoint")
 	void SchedulePrototypePlayerRetryAfterDefeat();
 
+	/** 저장 슬롯 삭제가 성공한 경우에만 실행 중 진행 이력과 체크포인트 표시를 초기화한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype|Checkpoint")
 	bool ClearPrototypeCheckpointProgress();
 
@@ -119,6 +127,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Aetherfall|Prototype|Boss")
 	FName GetPrototypeBossEncounterLabel() const;
 
+	/** 완료 상태와 최초 경과 시간을 기록하고 완료 이벤트·대사·저장을 연결한다. 이전 완료를 대성당 결말로 승격하는 경로를 허용한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype|Level")
 	void CompletePrototypeLevel(FName GoalLabel);
 
@@ -173,12 +182,14 @@ public:
 	bool ShouldShowPrototypeLevelCompleteBanner() const;
 	float GetPrototypeLevelCompleteBannerRemainingTime() const;
 
+	/** 중복되지 않은 열쇠 라벨을 진행 집합에 추가하고 획득 이벤트와 대응 대화를 요청한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype|Interaction")
 	void CollectPrototypeKey(FName KeyLabel);
 
 	UFUNCTION(BlueprintPure, Category = "Aetherfall|Prototype|Interaction")
 	bool HasCollectedPrototypeKey(FName KeyLabel) const;
 
+	/** 보상 라벨의 중복 수집을 막고 진행 이벤트를 발행한다. 실제 보상 수량 지급은 호출 측이 담당한다. */
 	UFUNCTION(BlueprintCallable, Category = "Aetherfall|Prototype|Interaction")
 	void CollectPrototypeReward(FName RewardLabel);
 
@@ -236,6 +247,7 @@ public:
 	FAetherPrototypeLoreEventSignature OnPrototypeLoreCollected;
 
 protected:
+	/** 액터의 시작 처리 전에 저장된 체크포인트 진행 상태를 읽는다. */
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -243,6 +255,7 @@ protected:
 private:
 	void SpawnPrototypeDamageTarget();
 	void DestroyPrototypeDamageTarget();
+	/** 생성 정책으로 위치·원형을 결정하고 지연 생성을 통해 원형을 먼저 적용한 뒤 사망 이벤트를 연결한다. */
 	void SpawnPrototypeEnemy();
 	void DestroyPrototypeEnemies();
 	void CleanPrototypeEnemyReferences();
@@ -250,19 +263,27 @@ private:
 	FAetherPrototypeEncounterRuntimeConfig BuildActivePrototypeEncounterRuntimeConfig() const;
 	void CommitPrototypeEncounterRuntimeConfig(const FAetherPrototypeEncounterRuntimeConfig& RuntimeConfig);
 	void SchedulePrototypeEnemyRespawn();
+	/** 완료 처리를 중복 실행하지 않도록 상태를 먼저 기록하고, 보상·구간 이벤트·저장·보스 후속 연출을 처리한다. */
 	void CompletePrototypeCombatRound();
 	void PlayPrototypeRoundCueSound(USoundBase* CueSound, FName CueName) const;
 	void ShowPrototypeMessage(const FString& Message, const FColor& Color) const;
 	FAetherPrototypeCheckpointSnapshotState BuildPrototypeCheckpointSnapshotState(const AAetherfallCharacter* PlayerCharacter) const;
 	void ApplyPrototypeCheckpointSnapshotState(const FAetherPrototypeCheckpointSnapshotState& SnapshotState);
 	void LogPrototypeCheckpointSnapshotQAState(const FString& Context) const;
+	/** 저장 스키마를 검증한 후 진행 상태를 채우고, 플레이어 적용 전까지 저장을 지연한다. */
 	void LoadPrototypeCheckpointSnapshot();
+	/** 유효한 체크포인트와 플레이어가 있고 복원 지연이 해제된 경우에만 현재 상태를 저장 슬롯에 기록한다. */
 	void SavePrototypeCheckpointSnapshot();
+	/** 체크포인트 위치·시점과 체력·회복 아이템을 적용한 뒤 저장 지연을 해제한다. */
 	void ApplyLoadedPrototypePlayerState();
+	/** 지원하는 저장 스키마인지 확인한 후 스냅샷 변환 결과를 실행 상태에 반영한다. */
 	bool PopulatePrototypeCheckpointStateFromSaveGame(const UAetherPrototypeSaveGame* SaveGameObject);
+	/** 사망 후 재시도를 위해 디스크 스냅샷을 다시 읽고 복원 중 덮어쓰기를 막는다. */
 	bool PreparePrototypeCheckpointRetryRestore();
+	/** 스냅샷의 라벨 집합을 월드 복원기에 전달해 상호작용 액터 상태를 맞춘다. */
 	void RefreshPrototypeCheckpointWorldState();
 	void RegisterPrototypeCheckpointFeedback(const FString& FeedbackLabel, const FLinearColor& FeedbackColor);
+	/** 보스 구간 복원 전에 공격 예약과 락온, 이전 아우렐 인스턴스를 정리한다. */
 	void ResetPrototypeBossEncounterRuntimeForCheckpointRestore(FName RuntimeEncounterLabel);
 	int32 DestroyPrototypeEnemiesByArchetype(EAetherEnemyArchetype EnemyArchetype);
 	void ResetPrototypeRoutePacingTimer();
@@ -271,8 +292,10 @@ private:
 	void ContinuePrototypeBeginPlayAfterIntro();
 	void SignalGameplayWorldReady();
 	bool TryRequestPrototypeCinematic(EAetherCinematicTrigger Trigger, FName EventLabel);
+	/** 대기 중이던 시작 또는 보스 도입 연출이 끝나면 해당 게임 흐름을 이어간다. */
 	void HandlePrototypeCinematicFinished(const FAetherCinematicRuntimeState& RuntimeState);
 
+	/** 사망한 적의 공격 슬롯을 반환하고 라운드 정책 결과에 따라 목표 알림, 완료 또는 보충 생성을 수행한다. */
 	UFUNCTION()
 	void HandlePrototypeEnemyDeath(UAetherHealthComponent* DeadHealthComponent, AActor* DamageCauser);
 
@@ -387,6 +410,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Aetherfall|Prototype|Dialogue", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAetherDialogueComponent> DialogueComponent;
 
+	/** 게임 모드가 생성한 적을 약한 참조로 추적하여 소멸한 액터를 소유하지 않는다. */
 	TArray<TWeakObjectPtr<AAetherEnemyBase>> CurrentPrototypeEnemies;
 	TWeakObjectPtr<AAetherPrototypeDamageTarget> CurrentPrototypeDamageTarget;
 	FAetherPrototypeEnemyAttackSlotCoordinator PrototypeEnemyAttackSlots;
@@ -418,6 +442,7 @@ private:
 	FName ActivePrototypeCheckpointLabel = NAME_None;
 	int32 ActivePrototypeCheckpointProgressRank = 0;
 	bool bHasLoadedPrototypeCheckpointSnapshot = false;
+	/** 복원 도중 기본 플레이어 값이 기존 저장 데이터를 덮어쓰지 않도록 저장을 잠시 미룬다. */
 	bool bDeferPrototypeCheckpointSaveUntilLoadedStateApplied = false;
 	FAetherPrototypeCheckpointRetryCoordinator PrototypeCheckpointRetry;
 	FString PrototypeCheckpointFeedbackLabel;
