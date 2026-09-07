@@ -4,7 +4,13 @@
 
 코드 블록은 링크에 표시한 연속된 실제 소스 줄에서 발췌했습니다. 모든 소스 링크는 `2dfcf0cd57cdd7972c35c6d25d4c38c22fcd6ae9` 커밋에 고정되어 있습니다.
 
+GIF는 기존 C++ API를 순서대로 호출한 자동 시연의 실제 게임 실행 화면입니다.
+
 ## 1. 전투 판단과 실행의 분리
+
+![연속 약공격과 강공격의 상태 전환](Media/combat-actions.gif)
+
+*약공격 중 들어온 후속 요청이 3연속 공격으로 이어집니다. 이어지는 강공격에서 행동 상태와 스태미나 변화도 확인할 수 있습니다.*
 
 공격 입력은 현재 행동, 자원, 재사용 시간과 충돌할 수 있습니다. [ActionGatePolicy](https://github.com/KangWooKim/Aetherfall/blob/2dfcf0cd57cdd7972c35c6d25d4c38c22fcd6ae9/Source/Aetherfall/Private/AetherCombatActionGatePolicy.cpp#L1)는 현재 상태를 담은 스냅샷을 받아 행동 가능 여부·안내 문구·후속 입력 예약 여부를 반환합니다. [CombatComponent](https://github.com/KangWooKim/Aetherfall/blob/2dfcf0cd57cdd7972c35c6d25d4c38c22fcd6ae9/Source/Aetherfall/Private/AetherCombatComponent.cpp#L1)는 그 결과를 실행 상태에 반영합니다.
 
@@ -68,6 +74,10 @@ PendingExecutionTarget.Reset();
 Notify와 대체 타이머가 공통 타격 처리 함수로 모이고, 완료 플래그와 타이머 해제를 통해 처형 한 회의 처리 상태를 관리합니다.
 
 ## 3. 저장 스냅샷과 복원 순서
+
+![피격 후 체크포인트의 체력과 위치 복원](Media/checkpoint-restore.gif)
+
+*피격 처리로 체력을 100에서 70으로 낮춘 뒤 체크포인트 재시도를 호출합니다. 저장된 체력 100과 체크포인트 위치로 돌아가는 장면입니다.*
 
 ### 저장 데이터와 현재 액터의 분리
 
@@ -153,6 +163,10 @@ RestorePrototypeActors(
 [공통 라벨 정의](https://github.com/KangWooKim/Aetherfall/blob/2dfcf0cd57cdd7972c35c6d25d4c38c22fcd6ae9/Source/Aetherfall/Public/AetherPrototypeLabels.h#L1)에는 수집·개방·완료 상태를 식별하는 공통 이름을 모아두었습니다. WorldRestorer는 종류별 액터 목록에 저장 라벨 집합을 대입해 현재 월드의 상태를 복원합니다.
 
 ## 4. 검기 풀링과 반환 처리
+
+![검기 두 차례 발사와 에테르 게이지 소비](Media/aether-slash.gif)
+
+*검기를 두 차례 발사하면 게이지가 100 → 65 → 30으로 감소하고, 발사체가 진행한 뒤 화면에서 사라집니다. 객체의 획득·반환과 재사용 관계는 아래 코드에서 확인할 수 있습니다.*
 
 ### 추적 상한과 초과 요청 처리
 
@@ -241,6 +255,10 @@ if (AAetherGameModeBase* GameMode = World->GetAuthGameMode<AAetherGameModeBase>(
 
 ## 6. 일시 정지 중 그래픽 설정 확인 시간 관리
 
+![일시 정지 중 15초 확인 시간 만료와 설정 복구](Media/paused-settings-timeout.gif)
+
+*2배속 시연입니다. 월드가 일시 정지된 상태에서도 15초 확인 시간이 흐르며, 시간이 만료되면 팝업이 닫히고 이전 화면 설정으로 복구됩니다.*
+
 설정 서비스는 Current/Pending/VideoRevert 스냅샷으로 현재 값·편집 값·복구 값을 분리합니다. 해상도나 창 모드 변경 후 확인 기한은 월드 타이머 대신 플랫폼 시간과 코어 틱커를 사용합니다. 기본 확인 시간은 15초입니다.
 
 ```cpp
@@ -275,3 +293,4 @@ OnCinematicFinishedNative.Broadcast(FinishedState);
 이 순서는 외부 콜백 전에 내부 상태를 정리하는 사례입니다. 컷신 요청 이벤트는 표현 계층의 연결 지점이며, 서비스는 [자동 종료 타이머](https://github.com/KangWooKim/Aetherfall/blob/2dfcf0cd57cdd7972c35c6d25d4c38c22fcd6ae9/Source/Aetherfall/Private/AetherCinematicDirectorSubsystem.cpp#L214)와 종료 이벤트를 통해 연출 상태의 생명주기를 관리합니다.
 
 메뉴는 [OpenMap](https://github.com/KangWooKim/Aetherfall/blob/2dfcf0cd57cdd7972c35c6d25d4c38c22fcd6ae9/Source/Aetherfall/Private/AetherMenuFlowSubsystem.cpp#L100)에서 전환 중복을 제어하고 로딩 화면을 요청합니다.
+
