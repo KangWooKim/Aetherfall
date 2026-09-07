@@ -22,11 +22,6 @@ Unreal Engine 5.4 / C++로 개발 중인 Windows용 3인칭 액션 RPG 개인 �
 - WorldSubsystem 기반 검기 풀과 반환 시 상태 초기화.
 - C++ 적 행동·공격 패턴·Aurel 페이즈, 메뉴·로딩·컷신·일시 정지·설정 서비스.
 
-## 현재 검증 상태
-
-2026-09-07 로컬 검증 기준입니다. 주석 정비 대상 모듈 144개 파일은 주석 외 코드·전처리·인코딩 보존 검사를 통과했습니다. 이번 동기화에는 기존 Target 파일 2개도 포함했습니다. 원격에 있던 소스 135개와 비교한 비주석 코드는 동일하며, 원격에 빠져 있던 모듈·Target·검증 소스 11개를 추가했습니다.
-
-격리 사본의 UHT는 통과했지만 C++ 빌드는 기존 [SOverlay include 경로](https://github.com/KangWooKim/Aetherfall/blob/2dfcf0cd57cdd7972c35c6d25d4c38c22fcd6ae9/Source/Aetherfall/Private/AetherLoadingScreenSubsystem.cpp#L17) 오류로 실패했습니다. 주석 변경 전 구현 파일로도 같은 오류를 재현했습니다. 이번 업로드에서 이 오류를 수정하지 않았습니다. 런타임 명령, 전체 경로 플레이, 실제 플레이타임, 성능·Shipping 패키지는 검증 완료 상태가 아닙니다.
 
 ## 저장소 범위와 실행 조건
 
