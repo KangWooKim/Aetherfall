@@ -213,7 +213,7 @@ bool UAetherSettingsSubsystem::TickVideoConfirmation(float DeltaTime)
 
 `UGameUserSettings`의 그래픽 값과 별도 Settings SaveGame의 음량·입력·접근성 값은 다른 저장 경로를 사용합니다. 설정 적용 성공 반환만으로 두 저장 경로의 디스크 쓰기 성공을 보증하지 않습니다. 체크포인트 형식 버전과 설정 저장 형식 버전도 서로 다릅니다.
 
-동적으로 생성한 UI SoundClass는 [사운드 믹스 적용 함수](https://github.com/KangWooKim/Aetherfall/blob/e462c536c195a16b46e526dab94c8d6170275e0c/Source/Aetherfall/Private/AetherSettingsSubsystem.cpp#L389-L432)에서 현재 월드의 오디오 장치에 먼저 등록합니다. 월드·믹스·마스터 클래스가 없으면 적용을 반환하고, 오디오 장치가 있으면 등록한 뒤 믹스 활성화와 클래스별 음량 덮어쓰기를 요청합니다. UI 클래스는 설정 서브시스템이 참조하며, 종료할 때 활성 믹스를 해제합니다.
+[사운드 믹스 적용 함수](https://github.com/KangWooKim/Aetherfall/blob/e462c536c195a16b46e526dab94c8d6170275e0c/Source/Aetherfall/Private/AetherSettingsSubsystem.cpp#L389-L432)는 `World`, `RuntimeSoundMix`, `MasterSoundClass` 중 하나라도 없으면 적용하지 않고 반환합니다. `UiSoundClass`가 있고 현재 월드의 오디오 장치를 얻은 경우 동적으로 생성한 UI SoundClass를 등록합니다. 이후 등록 여부와 관계없이 아직 활성화하지 않은 믹스를 활성화하고 클래스별 음량 덮어쓰기를 요청합니다. UI 클래스는 설정 서브시스템이 참조하며, 종료할 때 활성 믹스를 해제합니다.
 
 ## 7. 연출 종료 이벤트와 상태 정리
 
@@ -240,7 +240,7 @@ bool UAetherSettingsSubsystem::TickVideoConfirmation(float DeltaTime)
 
 ## 8. 대화와 게임 진행의 연결
 
-[대화 시작](https://github.com/KangWooKim/Aetherfall/blob/e462c536c195a16b46e526dab94c8d6170275e0c/Source/Aetherfall/Private/AetherDialogueComponent.cpp#L133)은 데이터의 트리거 라벨을 찾습니다. 다른 대화가 진행 중이면 중복을 제외한 트리거를 FIFO 배열에 보관합니다. 저장 요청과 달리 여기는 실제 대기열이 있습니다. `bSaveWhenPlayed` 대상은 대화를 시작할 때 재생 라벨에 추가하므로 마지막 문장을 본 사실과 같지 않습니다. 이 라벨이 디스크에 남으려면 이후 체크포인트 저장이 필요합니다.
+[대화 시작](https://github.com/KangWooKim/Aetherfall/blob/e462c536c195a16b46e526dab94c8d6170275e0c/Source/Aetherfall/Private/AetherDialogueComponent.cpp#L133)은 데이터의 트리거 라벨을 찾습니다. 다른 대화가 진행 중이면 중복을 제외한 트리거를 FIFO 배열에 보관합니다. `bSaveWhenPlayed` 대상은 대화를 시작할 때 재생 라벨에 추가하므로 마지막 문장을 본 사실과 같지 않습니다. 이 라벨이 디스크에 남으려면 이후 체크포인트 저장이 필요합니다.
 
 대화 종료는 다음 대기를 꺼내 다시 시작 조건을 확인합니다. [기본 Mock TTS](https://github.com/KangWooKim/Aetherfall/blob/e462c536c195a16b46e526dab94c8d6170275e0c/Source/Aetherfall/Private/AetherDialogueTtsService.cpp#L1)는 길이 추정과 완료 시각을 위한 카운트다운이며 음성을 합성하지 않습니다. 실제 음성 서비스는 별도 구현·연결 범위입니다.
 
