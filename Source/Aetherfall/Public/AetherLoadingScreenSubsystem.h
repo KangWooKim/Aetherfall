@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/Ticker.h"
 #include "AetherLoadingScreenTypes.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Styling/SlateBrush.h"
@@ -96,7 +97,7 @@ private:
 	bool bRequireGameplayReady = false;
 	bool bGameplayReady = false;
 
-	FDelegateHandle TickerHandle;
+	FTSTicker::FDelegateHandle TickerHandle;
 	TSharedPtr<SWidget> ViewportLoadingWidget;
 	TSharedPtr<SBorder> LoadingRootBorder;
 	TSharedPtr<SImage> LoadingBackgroundImage;

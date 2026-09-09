@@ -14,9 +14,9 @@
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
-#include "Widgets/Layout/SOverlay.h"
+#include "Widgets/SOverlay.h"
 #include "Widgets/Layout/SSpacer.h"
-#include "Widgets/Layout/SVerticalBox.h"
+#include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
 
 namespace

@@ -4,6 +4,7 @@
 #include "HAL/PlatformTime.h"
 
 #include "AetherSettingsSaveGame.h"
+#include "AudioDevice.h"
 #include "Engine/Engine.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Engine/LocalPlayer.h"
@@ -391,6 +392,15 @@ void UAetherSettingsSubsystem::EnsureSoundMixApplied()
 	if (!World || !RuntimeSoundMix || !MasterSoundClass)
 	{
 		return;
+	}
+
+	// 동적으로 생성한 UI 사운드 클래스는 믹스 적용 전에 현재 오디오 장치에 등록한다.
+	if (UiSoundClass)
+	{
+		if (FAudioDevice* AudioDevice = World->GetAudioDeviceRaw())
+		{
+			AudioDevice->RegisterSoundClass(UiSoundClass);
+		}
 	}
 
 	if (!bSoundMixPushed)
